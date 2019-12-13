@@ -22,19 +22,19 @@ class Phrase(str):
         return mapps
 
     def _word_split(self,word):
-        word_swaps = {}
+        # word_swaps = {}
         swaps = self.swaps
-        new_word = ""
-        for char in word:
-            if char == "'":
-                new_word += char
-            elif char.isalpha():
-                if char in self.swaps:
-                    word_swaps[char] = self.swaps[char]
-                    new_word += char
-                else:
-                    new_word += char
-        phrase = self.create(new_word,word_swaps)
+        # new_word = ""
+        # for char in word:
+        #     if char == "'":
+        #         new_word += char
+        #     elif char.isalpha():
+        #         if char in self.swaps:
+        #             word_swaps[char] = self.swaps[char]
+        #             new_word += char
+        #         else:
+        #             new_word += char
+        phrase = self.create(word,swaps)
         return phrase
 
     def splitter(self):
