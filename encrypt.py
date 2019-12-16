@@ -24,6 +24,28 @@ def encrypt(phrase):
     return encrypted_phrase
 
 
+def encypher(phrase):
+    keys = [i for i in string.ascii_uppercase]
+    values = [i for i in string.ascii_uppercase[:]]
+    cypher = {" ":" ","'":"'"}
+    num,l = 0,len(keys)
+    while values:
+        char = random.choice(keys)
+        temp = []
+        if char in values:
+            temp.append(char)
+            values.remove(char)
+        value = random.choice(values)
+        cypher[char] = value
+        keys.remove(char)
+        values.remove(value)
+        if temp:
+            values += temp
+        num += 1
+    encrypt = ''.join([cypher[i] for i in phrase])
+    return cypher,encrypt
+
 if __name__ == "__main__":
     phrase = "MOOSE ROOF FARTHER FIRE FIRST FOREMOST"
     encrypt(phrase)
+    encypher(phrase)

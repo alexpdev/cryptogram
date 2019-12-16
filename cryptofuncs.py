@@ -3,8 +3,8 @@ from classes import Phrase
 from encrypt import encrypt
 import copy
 
-def solve(gwords,p,last=""):
-    if len(gwords) == 0:    # When there are no words for matching return
+def solve(gwords,p):
+    if not gwords:
         return p.swapper()
     lst = p.splitter()      # list of each word
     matches = get_matches(gwords,lst)
@@ -65,11 +65,21 @@ def configure(phrase,matches):
         yield (uphrase,set(new_gwords))
 
 if __name__ == "__main__":
-    p = "MOOSE ROOF FOREMOST"
+    # p = "MOOSE ROOF FOREMOST"
+    phrase = "NAS VHV HY WJY MA OXYJ MA MAAF? HY'M FHWNY EJZADJ HY'M XZYJDFAAF. VJIJUEJD HM NJDJ EJZADJ HY'M TKFJ. -VD. MJKMM"
+    swaps = {"A":"O","V":"D","D":"R","M":"S","J":"E","K":"U"}
+    p = Phrase.create(phrase,swaps=swaps)
     gwords = WORDS
-    for i,v in PHRASES.items():
-        op = Phrase.create(i,swaps=v)
-        print(solve(gwords,op))
+    a = solve(gwords,p)
+    b = len(a)
+    c = 0
+    while c < b:
+        print(a[c])
+        input()
+        c += 1
+    # for i,v in PHRASES.items():
+    #     op = Phrase.create(i,swaps=v)
+    #     print(solve(gwords,op))
     # ep = encrypt(p)
     # for f in solve(gwords,op):
         # print(f)
