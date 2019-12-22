@@ -1,4 +1,5 @@
 from phrases import WORDS, PHRASES
+from utils import splt,positions,amount,swap,mapped
 from classes import Phrase
 import string
 import random
@@ -40,8 +41,6 @@ def get_match(gwords,word):
     gset = set()
     pair = set()
     for gword in gwords:
-        if gword == "WOODS":
-            a = 1
         if len(gword) != len(word):
             continue
         if ismatch(gword,word):

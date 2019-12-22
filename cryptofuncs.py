@@ -67,7 +67,7 @@ def configure(phrase,matches):
 if __name__ == "__main__":
     # p = "MOOSE ROOF FOREMOST"
     phrase = "NAS VHV HY WJY MA OXYJ MA MAAF? HY'M FHWNY EJZADJ HY'M XZYJDFAAF. VJIJUEJD HM NJDJ EJZADJ HY'M TKFJ. -VD. MJKMM"
-    swaps = {"A":"O","V":"D","D":"R","M":"S","J":"E","K":"U"}
+    swaps = {"A":"O"}
     p = Phrase.create(phrase,swaps=swaps)
     gwords = WORDS
     a = solve(gwords,p)
