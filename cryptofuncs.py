@@ -1,85 +1,59 @@
-from phrases import PHRASES,WORDS
-from classes import Phrase
+from phrases import Sample,Gwords
+from PhraseClass import Phrase
 from encrypt import encrypt
 import copy
 
-def solve(gwords,p):
-    if not gwords:
-        return p.swapper()
-    lst = p.splitter()      # list of each word
-    matches = get_matches(gwords,lst)
-    if not matches:
-        return p.swapper()
-    finals = []
-    for config in configure(p,matches):
-        np,ng = config
-        swapper = np.swapper()
-        finals.append(solve(ng,np))
-    return finals
+def gfilter(phrase,gwords):
+    gset = set()
+    for gword in gwords:
+        if phrase.is_match(gword):
+            gset.add(gword)
+    return gset
 
-def get_matches(gwords,lst):
-    matchings = {}
-    for word in lst:
-        if len(word.indeces) == len(word):
+def matchings(phrase,gwords):
+    for gword in gwords:
+        if phrase.is_match(gword):
+            yield (phrase,gword)
+
+def split_phrase(phrase):
+    """Input: Phrase object sentence
+        Output: list of Phrase object words"""
+    lst,num = [],0
+    for word in phrase.split(" "):
+        p = Phrase.create(word,phrase.key)
+        if p.is_full: num += 1
+        else: lst.append(p)
+    # s = sorted(lst,key=lambda x: len(x))
+    return lst
+
+def solve(phrase,gwords,nlst=[]):
+    if len(gwords) == 0:
+        return phrase
+    lst = split_phrase(phrase)
+    for old,new in find_matches(lst,gwords):
+        s = phrase.apply_word(old,new)
+        # print(phrase.swap)
+        # print("BEFORE")
+        # print(s.swap)
+        g = gfilter(s,gwords)
+        p = solve(s,g,nlst)
+        nlst.append(p)
+        if p.amount() >= len(p) - 60:
+            # print("AFTER")
+            print(p.swap)
+    return phrase
+
+def find_matches(lst,gwords):
+    seen = []
+    for i,word in enumerate(lst):
+        if word in seen:
             continue
-        elif word.mapp not in matchings:
-            matches = compare(gwords,word)
-            if matches:
-                matchings[word.mapp] = {'matches':matches,'words':[word]}
-        elif word not in matchings[word.mapp]['words']:
-            matchings[word.mapp]['words'].append(word)
-    return matchings
+        seen.append(word)
+        for match in matchings(word,gwords):
+            yield match
 
-def compare(gwords,word):
-    matches = set()
-    for g in gwords:
-        if len(g) == len(word):
-            gphrase = Phrase.create(g)
-            if ismatch(gphrase,word):
-                matches.add(gphrase)
-    return matches
 
-def ismatch(gphrase,word):
-    for pos in range(len(word)):
-        if type(word.mapp[pos]) == type(pos):
-            if word.mapp[pos] != gphrase.mapp[pos]:
-                return False
-        elif word.mapp[pos].isalpha():
-            if word.mapp[pos] != gphrase[pos]:
-                return False
-    return True
-
-def configure(phrase,matches):
-    mp,least = min(matches.items(),key=lambda x: len(x[1]["matches"]))
-    first_word = least['words'][0]
-    first_matches = least['matches']
-    if len(matches[mp]['words']) > 1:
-        matches[mp]['words'].remove(first_word)
-    else:
-        del matches[mp]
-    for choice in first_matches:
-        uphrase = phrase.update(first_word,choice)
-        new_gwords = []
-        for v in matches.values():
-            new_gwords += list(v['matches'])
-        yield (uphrase,set(new_gwords))
 
 if __name__ == "__main__":
-    # p = "MOOSE ROOF FOREMOST"
-    phrase = "NAS VHV HY WJY MA OXYJ MA MAAF? HY'M FHWNY EJZADJ HY'M XZYJDFAAF. VJIJUEJD HM NJDJ EJZADJ HY'M TKFJ. -VD. MJKMM"
-    swaps = {"A":"O"}
-    p = Phrase.create(phrase,swaps=swaps)
-    gwords = WORDS
-    a = solve(gwords,p)
-    b = len(a)
-    c = 0
-    while c < b:
-        print(a[c])
-        input()
-        c += 1
-    # for i,v in PHRASES.items():
-    #     op = Phrase.create(i,swaps=v)
-    #     print(solve(gwords,op))
-    # ep = encrypt(p)
-    # for f in solve(gwords,op):
-        # print(f)
+    phrase = Phrase.create(*Sample)
+    solve(phrase,Gwords)

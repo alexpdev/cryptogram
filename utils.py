@@ -36,12 +36,6 @@ def uniques(code):
             l.append(i)
     return l
 
-def splt(code):
-    """Split cleaned phrase into list of words"""
-    n_code = normalize(code)
-    lst = n_code.split(" ")
-    return lst
-
 def isfull(word,key):
     if amount(word,key) == len(word):
         return True
