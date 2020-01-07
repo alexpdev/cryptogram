@@ -1,59 +1,52 @@
 from phrases import Sample,Gwords
 from PhraseClass import Phrase
+from utils import vowel_idx,split_phrase
 from encrypt import encrypt
 import copy
 
-def gfilter(phrase,gwords):
-    gset = set()
-    for gword in gwords:
-        if phrase.is_match(gword):
-            gset.add(gword)
-    return gset
-
-def matchings(phrase,gwords):
-    for gword in gwords:
-        if phrase.is_match(gword):
-            yield (phrase,gword)
-
-def split_phrase(phrase):
-    """Input: Phrase object sentence
-        Output: list of Phrase object words"""
-    lst,num = [],0
-    for word in phrase.split(" "):
-        p = Phrase.create(word,phrase.key)
-        if p.is_full: num += 1
-        else: lst.append(p)
-    # s = sorted(lst,key=lambda x: len(x))
-    return lst
 
 def solve(phrase,gwords,nlst=[]):
-    if len(gwords) == 0:
-        return phrase
+    if len(gwords) == 0: return phrase
     lst = split_phrase(phrase)
-    for old,new in find_matches(lst,gwords):
-        s = phrase.apply_word(old,new)
-        # print(phrase.swap)
-        # print("BEFORE")
-        # print(s.swap)
-        g = gfilter(s,gwords)
-        p = solve(s,g,nlst)
-        nlst.append(p)
-        if p.amount() >= len(p) - 60:
-            # print("AFTER")
-            print(p.swap)
-    return phrase
+    for old,new in matchings(lst,gwords):
+        temp = phrase.copy()
+        temp = temp.apply_word(old,new)
+        new_phrase = solve(temp,gwords,nlst)
+        swap = new_phrase.swap
+        if swap not in nlst:
+            nlst.append(swap)
+            print(swap)
 
-def find_matches(lst,gwords):
+
+
+def matchings(lst,gwords):
     seen = []
-    for i,word in enumerate(lst):
-        if word in seen:
+    for word in lst:
+        if word.is_full or word in seen:
             continue
         seen.append(word)
-        for match in matchings(word,gwords):
-            yield match
+        for gword in gwords:
+            if word.is_match(gword):
+                yield word,gword
 
+def gfilter(phrase,gwords):
+    top = phrase.analyze_phrase()
+    lst,seen = split_phrase(phrase),[]
+    first,second,third = set(),set(),set()
+    sets = [first,second,third]
+    for word in lst:
+        if word in seen or word.is_full:
+            continue
+        seen.append(word)
+        for gword in gwords:
+            if word.is_match(gword):
+                idx = vowel_idx(word,gword,top)
+                sets[idx].add(gword)
+    for gs in sets:
+        if gs: yield gs
 
 
 if __name__ == "__main__":
     phrase = Phrase.create(*Sample)
-    solve(phrase,Gwords)
+    for gwords in gfilter(phrase,Gwords):
+        phrase = solve(phrase,gwords)

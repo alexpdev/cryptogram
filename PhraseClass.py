@@ -3,6 +3,7 @@ class Phrase(str):
     def __init__(self,s):
         super()
         self.key = {}
+        self.top = []
 
     def __str__(self):
         return self
@@ -26,6 +27,7 @@ class Phrase(str):
 
     @property
     def swap(self):
+        """Returns phrase with applied character swaps from key"""
         s = ""
         for char in self:
             if char in self.key:
@@ -55,7 +57,6 @@ class Phrase(str):
                     string.key[i] = j
         return string
 
-
     def trace(self):
         """Generate word map"""
         num,mapp,temps = 0,[],{}
@@ -79,6 +80,8 @@ class Phrase(str):
         return idx
 
     def is_match(self,word):
+        """Input: English word uppercase,
+        Output: Boolean, self and input are compatible"""
         if len(word) != len(self): return False
         temps = {}
         for c1,c2 in zip(self,word):
@@ -91,3 +94,15 @@ class Phrase(str):
                 return False
             temps[c1] = c2
         return True
+
+    def analyze_phrase(self):
+        counts = {}
+        for char in self:
+            if not char.isalpha(): continue
+            elif char in counts:
+                counts[char] += 1
+            else:
+                counts[char] = 1
+        t = list(sorted(counts.items(),key=lambda x: x[1]))
+        self.top = t[:4]
+        return self.top

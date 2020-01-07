@@ -1,3 +1,4 @@
+from utils import analyze_phrase
 from unittest import TestCase
 from encrypt import encypher
 import string
@@ -16,48 +17,33 @@ class CryptoTest(TestCase):
             self.assertNotEqual(key[i],i)
         self.assertEqual(len(phrase),len(self.phrase))
 
+from PhraseClass import Phrase
 
-
-from classes import Phrase
-
-class TestPhrase(unittest.TestCase):
+class TestPhrase(TestCase):
 
     def setUp(self):
         self.phrase = Phrase.create("THE EYE OF THE TIGER")
 
     def test_Phrase(self):
-        self.assertFalse(self.phrase.swaps)
-        self.assertFalse(self.phrase.indeces)
+        self.assertFalse(self.phrase.key)
+        self.assertFalse(self.phrase.amount)
         return
-
-    def test_Phrase_splitter(self):
-        lst = self.phrase.splitter()
-        self.assertEqual(len(lst),len(self.phrase.split(' ')))
-        for i in lst:
-            self.assertIsInstance(i,Phrase)
-        return
-
-    def test_phrase_mapper(self):
-        self.assertEqual(len(self.phrase.mapp),len(self.phrase))
-
 
 class TestPhraseWithSwaps(unittest.TestCase):
 
     def setUp(self):
-        self.phrase = Phrase.create("FSL LYL OR FSL FIGLP",swaps={"F":"T","L":"E","R":"F","S":"H","P":"R"})
+        self.phrase = Phrase.create("FSL LYL OR FSL FIGLP",{"F":"T","L":"E","R":"F","S":"H","P":"R"})
 
     def test_Phrase(self):
-        self.assertTrue(self.phrase.swaps)
-        self.assertTrue(self.phrase.indeces)
+        self.assertTrue(self.phrase.key)
+        self.assertTrue(self.phrase.amount)
         return
 
-    def test_Phrase_splitter(self):
-        lst = self.phrase.splitter()
-        self.assertEqual(len(lst),len(self.phrase.split(' ')))
-        for i in lst:
-            self.assertIsInstance(i,Phrase)
-        return
+class TestUtils(TestCase):
 
-    def test_phrase_mapper(self):
-        self.assertEqual(len(self.phrase.mapp),len(self.phrase))
-        print(self.phrase.mapp)
+    def setUp(self):
+        self.phrase = "HELLO BOB"
+
+    def test_analyze_phrase(self):
+        p = analyze_phrase(self.phrase)
+        self.assertEqual(type(p),dict)

@@ -1,4 +1,5 @@
 # Utility functions for cryptogram decryption
+from PhraseClass import Phrase
 
 def mapped(word):
     """Generate word map"""
@@ -12,23 +13,6 @@ def mapped(word):
             mapp.append(temps[i])
     return mapp
 
-def normalize(code):
-    """Clean code of most punctuation"""
-    n_code = [i for i in code if i.isalpha() or i == " "]
-    n_code = "".join(n_code).upper()
-    return n_code
-
-def positions(word,key):
-    """Locations of characters already in key"""
-    n_word = normalize(word)
-    idx = [i for i in range(len(n_word)) if n_word[i] in key]
-    return idx
-
-def amount(word,key):
-    """Total amount of swapped characters using key"""
-    a = positions(word,key)
-    return len(a)
-
 def uniques(code):
     l = []
     for i in code:
@@ -36,31 +20,22 @@ def uniques(code):
             l.append(i)
     return l
 
-def isfull(word,key):
-    if amount(word,key) == len(word):
-        return True
+def vowel_idx(phrase,gword,top):
+    l = len(phrase)
+    pvowels = [i for i in range(l) if phrase[i] in top]
+    gvowels = [i for i in pvowels if gword[i] in "AEIOU"]
+    if len(gvowels) == len(pvowels):
+        return 0
+    elif not len(gvowels):
+        return 2
+    return 1
 
-def isswappy(i,key):
-    a = amount(i,key)
-    if a > 0 and a < len(i):
-        return True
-    return False
-
-def isword(i,key,words):
-    s = swap(i,key)
-    if s in words:
-        return True
-    return False
-
-def swap(word,key):
-    """Returns phrase with applied character swaps from key"""
-    if not key:
-        return word
-    else:
-        s = ""
-        for i in word:
-            if i in key:
-                s += key[i]
-            else:
-                s += i
-    return s
+def split_phrase(phrase):
+    """Input: Phrase object sentence
+        Output: list of Phrase object words"""
+    lst,num = [],0
+    for word in phrase.split(" "):
+        p = Phrase.create(word,phrase.key)
+        if p.is_full: num += 1
+        else: lst.append(p)
+    return lst
