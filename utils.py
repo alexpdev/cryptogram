@@ -33,9 +33,8 @@ def vowel_idx(phrase,gword,top):
 def split_phrase(phrase):
     """Input: Phrase object sentence
         Output: list of Phrase object words"""
-    lst,num = [],0
+    lst = []
     for word in phrase.split(" "):
         p = Phrase.create(word,phrase.key)
-        if p.is_full: num += 1
-        else: lst.append(p)
+        lst.append(p)
     return lst
