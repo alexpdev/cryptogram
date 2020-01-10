@@ -1,4 +1,4 @@
-from utils import analyze_phrase
+from utils import uniques
 from unittest import TestCase
 from encrypt import encypher
 import string
@@ -26,10 +26,9 @@ class TestPhrase(TestCase):
 
     def test_Phrase(self):
         self.assertFalse(self.phrase.key)
-        self.assertFalse(self.phrase.amount)
         return
 
-class TestPhraseWithSwaps(unittest.TestCase):
+class TestPhraseWithSwaps(TestCase):
 
     def setUp(self):
         self.phrase = Phrase.create("FSL LYL OR FSL FIGLP",{"F":"T","L":"E","R":"F","S":"H","P":"R"})
@@ -42,8 +41,8 @@ class TestPhraseWithSwaps(unittest.TestCase):
 class TestUtils(TestCase):
 
     def setUp(self):
-        self.phrase = "HELLO BOB"
+        self.string = "HELLO"
 
-    def test_analyze_phrase(self):
-        p = analyze_phrase(self.phrase)
-        self.assertEqual(type(p),dict)
+    def uniques(self):
+        a = uniques(self.string)
+        self.assertEqual(len(a),4)
