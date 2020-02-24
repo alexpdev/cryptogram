@@ -1,4 +1,3 @@
-
 class Phrase(str):
 
     def __init__(self,s):
