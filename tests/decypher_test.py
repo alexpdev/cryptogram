@@ -1,11 +1,20 @@
 from unittest import TestCase
-from decypher import decypher,get_sort
-from ranks import ranks
+from cryptogram.decrypt import sanatize
 
-class TestDecypher(TestCase):
+class DecypherTest(TestCase):
 
-    def get_sort_test(self):
-        top = get_sort(ranks)
-        self.assertEqual(type(top),list)
-        self.assertTrue(top)
-        self.assertIn("E",top)
+    def setUp(self):
+        self.samples = {
+            "!()^&&$:':;-_a" : "'a",
+            "James was Ugly!" : "James was Ugly",
+            "ME" : "ME",
+            "*******" : "",
+            "I'll" : "I'll",
+        }
+
+
+    def test_sanatize(self):
+        for k,v in self.samples.items():
+            result = sanatize(k)
+            print(result,v)
+            self.assertEqual(result,v)

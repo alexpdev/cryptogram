@@ -1,5 +1,5 @@
-from __init__ import CONFIG
-from Mapfuncs import Map
+from .config import CONFIG
+from .Mapfuncs import Map
 # from managers import Manager,Phrase
 
 def main(**kwargs):

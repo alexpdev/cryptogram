@@ -1,9 +1,9 @@
-from utils import uniques
 from unittest import TestCase
-from encrypt import encypher
+from cryptogram.encrypt import encypher
+from cryptogram.decrypt import sanatize
 import string
 
-class CryptoTest(TestCase):
+class EncypherTest(TestCase):
 
     def setUp(self):
         self.phrase = "MOOSE"
@@ -17,32 +17,19 @@ class CryptoTest(TestCase):
             self.assertNotEqual(key[i],i)
         self.assertEqual(len(phrase),len(self.phrase))
 
-from PhraseClass import Phrase
-
-class TestPhrase(TestCase):
+class DecypherTest(TestCase):
 
     def setUp(self):
-        self.phrase = Phrase.create("THE EYE OF THE TIGER")
+        self.samples = {
+            "ME" : "ME",
+            "James was Ugly!" : "James was Ugly",
+            "I'll" : "I'll",
+            "*******" : "",
+            "!()^&&$:':;-_a" : "'a",
+        }
 
-    def test_Phrase(self):
-        self.assertFalse(self.phrase.key)
-        return
-
-class TestPhraseWithSwaps(TestCase):
-
-    def setUp(self):
-        self.phrase = Phrase.create("FSL LYL OR FSL FIGLP",{"F":"T","L":"E","R":"F","S":"H","P":"R"})
-
-    def test_Phrase(self):
-        self.assertTrue(self.phrase.key)
-        self.assertTrue(self.phrase.amount)
-        return
-
-class TestUtils(TestCase):
-
-    def setUp(self):
-        self.string = "HELLO"
-
-    def uniques(self):
-        a = uniques(self.string)
-        self.assertEqual(len(a),4)
+    def test_sanatize(self):
+        for k,v in self.samples.items():
+            result = sanatize(k)
+            print(result,v)
+            self.assertEqual(result,v)
