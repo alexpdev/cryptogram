@@ -1,35 +1,60 @@
 class InvalidChar(Exception):
     pass
 
+class EndOfTheRope(Exception):
+    pass
+
 class Map:
+    map_id = 0
+    map_keys = {}
 
     def __init__(self,**kwargs):
         self.phrase_init = kwargs["phrase"]
         self.phrase = kwargs["phrase"]
         self.key = kwargs["key"]
         self.wordset = kwargs["wordset"]
-        self.matches = None
-        self.sequence = []
+        self.mapseq = {}
+
+    @classmethod
+    def stash(cls,key):
+        i = str(cls.map_id)
+        cls.map_keys[i] = tuple(key.items())
+        cls.map_id += 1
+        return i
 
     def analyze(self):
-        pass
+        raise EndOfTheRope
 
-    def filter_words(self,seq,words):
+    def key_match(self,word,mapp):
+        lst = []
+        for part in self.mapseq[mapp]:
+            for i,char in enumerate(part):
+                if char in self.key:
+                    if self.key[char] != word[i]:
+                        break
+            else:
+                lst.append(part)
+        return tuple(lst)
+
+
+    def filter_words(self,seq):
         lex = dict()
-        for word,mapp in self.gen_map(words):
+        for word,mapp in self.gen_map(self.wordset):
             if mapp in seq:
                 if mapp not in lex:
                     lex[mapp] = [word]
                 else:
                     lex[mapp].append(word)
-        self.matches = lex
         return lex
 
     def map_sequence(self,seq):
         lst = []
         for item,mapp in self.gen_map(seq):
             lst.append(mapp)
-        self.mapseq = lst
+            if mapp in self.mapseq:
+                self.mapseq[mapp].append(item)
+            else:
+                self.mapseq[mapp] = [item]
         return lst
 
     def gen_map(self,seq):
