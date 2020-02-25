@@ -1,19 +1,35 @@
-from .config import CONFIG
-from .Mapfuncs import Map
-# from managers import Manager,Phrase
+if __name__ == "__main__":
+    from config import CONFIG
+    from Mapfuncs import Map
+    # from managers import Manager
+else:
+    from .config import CONFIG
+    from .Mapfuncs import Map
 
 def main(**kwargs):
-    mp = Map()
-    phrase = sanatize(kwargs["phrase"])
-    partials = phrase.split(" ")
+    mp = Map(**kwargs)
+    mp.phrase = sanatize(kwargs["phrase"])
+    partials = mp.phrase.split(" ")
     part_map = mp.map_sequence(partials)
-    words = kwargs["wordset"]
-    word_dict = filter_words(mp,part_map,words)
-    print(word_dict)
+    word_dict = filter_words(part_map,mp)
+    discover(partials,word_dict,mp)
 
-def filter_words(mp,seq,words):
+def discover(partials,word_dict,mp):
+    if not len(partials):
+        return mp.analyze()
+    short = find_shortest(word_dict)
+
+def find_shortest(d):
+    shortest,mapp = None,None
+    for k,v in d.items():
+        if not shortest or len(v) < len(shortest):
+            shortest = v
+            mapp = k
+    return mapp
+
+def filter_words(seq,mp):
     lex = dict()
-    for word,mapp in mp.gen_map(words):
+    for word,mapp in mp.gen_map(mp.wordset):
         if mapp in seq:
             if mapp not in lex:
                 lex[mapp] = [word]
