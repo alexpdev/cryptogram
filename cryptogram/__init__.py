@@ -11,3 +11,10 @@ phrases = json.load(open(phrase_file,"tr"))
 
 phrase = "C QZHK GUZ CXGZQXZG BD SMVU C YZZI ICWZ C'S DX FHPZ DXZ SCIICDX DY GUZ ADQBG NDDW ZTZQ - HECE HXBHQC"
 key = {"W":"K"}
+
+CONFIG = {
+    "phrase" : phrase,
+    "key" : key,
+    "wordset" : words,
+    "examples" : phrases
+}

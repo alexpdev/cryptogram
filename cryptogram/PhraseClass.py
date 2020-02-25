@@ -1,7 +1,7 @@
-class Phrase(str):
+class Partial(str):
 
     def __init__(self,s):
-        str.__init__(self,s)
+        super()
         self.d = dict()
 
     def __str__(self):
@@ -45,7 +45,7 @@ class Phrase(str):
     def compare(self,word):
         if len(word) != len(self): return False
         if self.trace() != self.trace(word): return False
-        for i,j in zip(self,word):
+        for i,ji in zip(self,word):
             if i in self.d:
                 if self.d[i] != j:
                     return False
