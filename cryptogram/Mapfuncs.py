@@ -5,8 +5,6 @@ class EndOfTheRope(Exception):
     pass
 
 class Map:
-    map_id = 0
-    map_keys = {}
 
     def __init__(self,**kwargs):
         self.phrase_init = kwargs["phrase"]
@@ -15,27 +13,36 @@ class Map:
         self.wordset = kwargs["wordset"]
         self.mapseq = {}
 
-    @classmethod
-    def stash(cls,key):
-        i = str(cls.map_id)
-        cls.map_keys[i] = tuple(key.items())
-        cls.map_id += 1
-        return i
+    def addKeys(self,part,word):
+        chars = []
+        for w,p in zip(word,part):
+            if p not in self.key:
+                self.key[p] = w
+                chars.append(p)
+        # print("Added",chars,"to",self.key)
+        return tuple(chars)
 
-    def analyze(self):
-        raise EndOfTheRope
+    def removeKeys(self,chars,part):
+        # print("Removing",chars,"from",self.key)
+        for i in chars:
+            del self.key[i]
+        return
 
-    def key_match(self,word,mapp):
-        lst = []
-        for part in self.mapseq[mapp]:
-            for i,char in enumerate(part):
-                if char in self.key:
-                    if self.key[char] != word[i]:
-                        break
-            else:
-                lst.append(part)
-        return tuple(lst)
+    def isDecrypt(self,part):
+        for char in part:
+            if char not in self.key:
+                return False
+        return True
 
+    def isMatch(self,word,partial):
+        vals = self.key.values()
+        for i,char in enumerate(partial):
+            if char in self.key:
+                if self.key[char] != word[i]:
+                    return False
+            elif word[i] in vals:
+                return False
+        return True
 
     def filter_words(self,seq):
         lex = dict()

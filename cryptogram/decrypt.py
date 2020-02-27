@@ -1,9 +1,10 @@
 if __name__ == "__main__":
-    from config import CONFIG
     from Mapfuncs import Map
+    from manager import Manager
 else:
     from .config import CONFIG
     from .Mapfuncs import Map
+    from .manager import Manager
 
 def main(**kwargs):
     mp = Map(**kwargs)
@@ -11,53 +12,43 @@ def main(**kwargs):
     partials = mp.phrase.split(" ")
     part_map = mp.map_sequence(partials)
     map_dict = mp.filter_words(part_map)
-    discover(mp,map_dict,[0])
+    man = Manager(kwargs["phrase"])
+    discover(mp,map_dict,man)
+    return man
 
-def discover(mp,map_dict,track):
-    if not map_dict:
-        mp.analyze()
-    for pair in get_pairing(mp,map_dict):
-        pass
+def discover(mp,map_dict,manager):
+    if map_dict:
+        pairs,removed = compareMap(mp,map_dict)
+        for k in removed:
+            del map_dict[k]
+        for part,word in pairs:
+            chars = mp.addKeys(part,word)
+            if manager.log(mp.key): return
+            discover(mp,map_dict,manager)
+            mp.removeKeys(chars,part)
+        map_dict.update(removed)
+    return
 
+def compareMap(mp,mapdict):
+    mapSrt = sorted(mapdict.items(),key=lambda x: len(x[1]))
+    removed,pairs = dict(),[]
+    for mapp,words in mapSrt:
+        for part in mp.mapseq[mapp]:
+            pairs = get_pairs(mp,part,words)
+            if not pairs:
+                removed[mapp] = words
+            else:
+                return pairs,removed
+    return pairs,removed
 
-def get_pairing(mp,map_dict):
-    mapSrt = sorted(map_dict.items(),key=lambda x: len(x[1]))
-    for k,v in mapSrt:
-        pair = _pairing(k,v,mp)
-
-def _pairing(mapp,words,mp):
-    print (mapp,words,mp.mapseq[mapp])
-    partLen,parts = len(mp.mapseq[mapp]),mp.mapseq[mapp]
-    wrdLen,vals = len(words),list(mp.key.values())
-    keyRev = reverseDict(mp.key)
-    pcounts = [sum([1 for j in parts[i] if j in mp.key])
-             for i in range(partLen)]
-    partial = parts[pcounts.index(max(pcounts))]
-    for i,word in enumerate(words):
-        for
-
-
-def reverseDict(key):
-    reverse = dict()
-    for k,v in key.items():
-        reverse[v] = k
-    return reverse
-
-
-    # for partial in mp.mapseq[short]:
-    #     matches = mp.key_match(partial,short)
-    #     if not matches: continue
-    #     first = matches[0]
-    #     num = Map.stash(mp.key)
-
-def find_shortest(map_dict):
-    shortest,mapp = None,None
-    for k,v in map_dict.items():
-        if not shortest or len(v) < len(shortest):
-            shortest = v
-            mapp = k
-    return mapp
-
+def get_pairs(mp,part,words):
+    pairs = []
+    if not mp.isDecrypt(part):
+        for word in words:
+            if mp.isMatch(word,part):
+                pair = (part,word)
+                pairs.append(pair)
+    return tuple(pairs)
 
 def sanatize(txt):
     sanatized_txt = ""
@@ -67,30 +58,7 @@ def sanatize(txt):
     return sanatized_txt
 
 if __name__ == "__main__":
-    kwargs = CONFIG
-    txt = kwargs["phrase"]
-    a = main(**kwargs)
-    print(a)
-
-# def filter_words(seq,mp):
-#     """ Function implemented as method of Map() instance """
-#     lex = dict()
-#     for word,mapp in mp.gen_map(mp.wordset):
-#         if mapp in seq:
-#             if mapp not in lex:
-#                 lex[mapp] = [word]
-#             else:
-#                 lex[mapp].append(word)
-#     return lex
-
-# def discover(mp,map_dict,track):
-#     """ Iterates through words that matched partials in map_dict
-#        rather than iterate partials that matched words """
-#     if not map_dict:
-#         mp.analyze()
-#     short = find_shortest(map_dict)
-#     for word in map_dict[short]:
-#         matches = mp.key_match(word,short)
-#         if not matches: continue
-#         first = matches[0]
-#         num = Map.stash(mp.key)
+    import config
+    for kwargs in config.cycle():
+        a = main(**kwargs)
+        input("Enter to continue")
