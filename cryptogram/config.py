@@ -8,10 +8,9 @@ phrase_file = os.path.join(BASE_DIR,"_words","phrases.json")
 words_file = os.path.join(BASE_DIR,"_words","words.pickle")
 words = pickle.load(open(words_file,"br"))
 
-phrase = 'QIVQOZ QFXQOT QIKQVZ UKKQVZ QIVQKZ'
-# "EXPERT ELDERS EXCEPT ACCEPT EXPECT"
-key = {"I":"X"}
-# _key = {'E': 'Q', 'X': 'I', 'L': 'F', 'A': 'U', 'P': 'V', 'R': 'O', 'D': 'X', 'S': 'T', 'T': 'Z', 'C': 'K'}
+phrase = 'QIVQOZ QFXQOT QIKQVZ UKKQVZ QIVQKZ' #example
+key = {"I":"X"} # example
+
 
 CONFIG = {
     "phrase" : phrase,

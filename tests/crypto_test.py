@@ -17,7 +17,7 @@ class EncypherTest(TestCase):
             self.assertNotEqual(key[i],i)
         self.assertEqual(len(phrase),len(self.phrase))
 
-class DecypherTest(TestCase):
+class DecryptTest(TestCase):
 
     def setUp(self):
         self.samples = {

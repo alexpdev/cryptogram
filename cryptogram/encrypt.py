@@ -2,27 +2,28 @@ import random
 import string
 
 def encrypt(phrase):
+    keys,values,code,key = [],[],"",{}
     alpha = [i for i in string.ascii_uppercase]
-    swaps = {}
-    encrypted_phrase = ""
-    for char in phrase:
-        if char in swaps:
-            encrypted_phrase += swaps[char]
-        elif not char.isalpha():
-            encrypted_phrase += char
+    for char in phrase.upper():
+        if not char.isalpha():
+            code += char
+            continue
+        elif char in values:
+            code += keys[values.index(char)]
+            continue
+        keys.append(char)
+        if char in alpha:
+            alpha.remove(char)
+            item = random.choice(alpha)
+            alpha.append(char)
         else:
-            removed = False
-            if char in alpha:
-                alpha.remove(char)
-                removed = True
-            choice = random.choice(alpha)
-            swaps[char] = choice
-            encrypted_phrase += choice
-            alpha.remove(choice)
-            if removed:
-                alpha.append(char)
-    return encrypted_phrase
-
+            item = random.choice(alpha)
+        alpha.remove(item)
+        values.append(item)
+        code += item
+    for k,v in zip(keys,values):
+        key[v] = k
+    return code,key
 
 def encypher(phrase):
     keys = [i for i in string.ascii_uppercase]

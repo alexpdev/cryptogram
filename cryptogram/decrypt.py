@@ -1,9 +1,9 @@
 if __name__ == "__main__":
-    from Mapfuncs import Map
+    from mapClass import Map
     from manager import Manager
 else:
     from .config import CONFIG
-    from .Mapfuncs import Map
+    from .mapClass import Map
     from .manager import Manager
 
 def main(**kwargs):
