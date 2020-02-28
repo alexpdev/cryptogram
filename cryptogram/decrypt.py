@@ -55,7 +55,7 @@ def sanatize(txt):
     for char in txt:
         if char.isalpha() or char in " '":
             sanatized_txt += char
-    return sanatized_txt
+    return sanatized_txt.upper()
 
 if __name__ == "__main__":
     import config
