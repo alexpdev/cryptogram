@@ -7,4 +7,4 @@ key = dict() mapping of old char to new char example ex: {"A":"B"}
 2. Split phrase into list of strings
 3. create numerical mapping of characters for each string in phrase list
 4. compare mappings with wordset those dont match any strings in phrase
-5.
+5. finish

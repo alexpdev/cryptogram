@@ -1,13 +1,12 @@
 from unittest import TestCase
-from cryptogram import mapClass
 from cryptogram.mapClass import Map,InvalidChar
-from cryptogram.config import words
+from cryptogram.cnf import wordset
 
 
 class MapTest(TestCase):
 
     def setUp(self):
-        self.words = words
+        self.words = wordset
         self.kwargs = {
             "wordset": self.words,
             "phrase": "MYBBP",

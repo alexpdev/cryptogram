@@ -1,18 +1,25 @@
-if __name__ == "__main__":
-    from mapClass import Map
-    from manager import Manager
-else:
-    from .config import CONFIG
-    from .mapClass import Map
-    from .manager import Manager
+# if __name__ == "__main__":
+# from mapClass import Map
+# from manager import Manager
+# else:
+from cryptogram.mapClass import Map
+from cryptogram.manager import Manager,ResetKey,Solved
 
 def main(**kwargs):
+    man = Manager(**kwargs)
+    try:
+        decrypt(man,**kwargs)
+    except ResetKey:
+        main(**man.args)
+    except Solved:
+        return
+
+def decrypt(man,**kwargs):
     mp = Map(**kwargs)
     mp.phrase = sanatize(kwargs["phrase"])
     partials = mp.phrase.split(" ")
     part_map = mp.map_sequence(partials)
     map_dict = mp.filter_words(part_map)
-    man = Manager(kwargs["phrase"])
     discover(mp,map_dict,man)
     return man
 
@@ -58,7 +65,7 @@ def sanatize(txt):
     return sanatized_txt.upper()
 
 if __name__ == "__main__":
-    import config
+    from cryptogram.cnf import SETTINGS, cycle
     for kwargs in config.cycle():
         a = main(**kwargs)
         input("Enter to continue")

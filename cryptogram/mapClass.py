@@ -7,7 +7,7 @@ class EndOfTheRope(Exception):
 class Map:
 
     def __init__(self,**kwargs):
-        self.phrase_init = kwargs["phrase"]
+        self.initial = kwargs["phrase"]
         self.phrase = kwargs["phrase"]
         self.key = kwargs["key"]
         self.wordset = kwargs["wordset"]

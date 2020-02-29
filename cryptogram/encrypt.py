@@ -62,6 +62,5 @@ def gen_cypher():
         start += 1
     return dct
 
-if __name__ == "__main__":
-    pass
-    # phrase = "MOOSE ROOF FARTHER FIRE FIRST FOREMOST"
+# if __name__ == "__main__":
+#     phrase = "MOOSE ROOF FARTHER FIRE FIRST FOREMOST"

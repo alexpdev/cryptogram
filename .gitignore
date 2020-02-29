@@ -1,3 +1,7 @@
+env/
+node_modules/
+*.pyc
+phrases.json
 venv/
 .vscode/
 __pycache__/
