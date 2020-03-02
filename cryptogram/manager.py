@@ -6,21 +6,23 @@ class Solved(Exception):
 
 class Manager:
     def __init__(self,**kwargs):
-        self.phrase = kwargs["phrase"]
+        self._phrase = kwargs["phrase"]
         self.verbosity = kwargs["verbosity"]
+        self.wordset = kwargs["wordset"]
         self.output = kwargs["output"]
         self.args = kwargs
         self.id = 0
+        self.last_id = None
         self.amount = 0
         self.track = {}
-        self.end = False
         self.total_chars = self.total()
 
     def log(self,key):
         keylen = len(key)
         self.track[self.id] = key
-        self.id += 1
-        return self.review_status(keylen,key)
+
+        print(self.swap(key))
+        # return self.review_status(keylen,key)
 
     def review_status(self,keylen,key):
         if keylen > self.amount:
@@ -41,7 +43,7 @@ class Manager:
 
     def swap(self,key):
         phrase = ""
-        for i in self.phrase:
+        for i in self._phrase:
             if i in key:
                 phrase += key[i]
             else:
@@ -50,7 +52,7 @@ class Manager:
 
     def total(self):
         chars = []
-        for char in self.phrase:
+        for char in self._phrase:
             if char.isalpha() and char not in chars:
                 chars.append(char)
         return len(chars)

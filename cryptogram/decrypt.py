@@ -1,71 +1,64 @@
-# if __name__ == "__main__":
-# from mapClass import Map
-# from manager import Manager
-# else:
-from cryptogram.mapClass import Map
+import sys,os
+from cryptogram.phraseMap import PhraseMap
 from cryptogram.manager import Manager,ResetKey,Solved
 
 def main(**kwargs):
     man = Manager(**kwargs)
-    try:
-        decrypt(man,**kwargs)
-    except ResetKey:
-        main(**man.args)
-    except Solved:
-        return
+    key = kwargs["key"]
+    wordset = kwargs["wordset"]
+    phrase = sanatize(kwargs["phrase"])
+    pm = PhraseMap(phrase,key)
+    matches = pm.filter_words(wordset)
+    discover(matches,pm,man)
 
-def decrypt(man,**kwargs):
-    mp = Map(**kwargs)
-    mp.phrase = sanatize(kwargs["phrase"])
-    partials = mp.phrase.split(" ")
-    part_map = mp.map_sequence(partials)
-    map_dict = mp.filter_words(part_map)
-    discover(mp,map_dict,man)
-    return man
-
-def discover(mp,map_dict,manager):
-    if map_dict:
-        pairs,removed = compareMap(mp,map_dict)
+def discover(matches,pm,manager):
+    if matches:
+        pairs,removed = filter_matches(pm,matches)
         for k in removed:
-            del map_dict[k]
+            del matches[k]
         for part,word in pairs:
-            chars = mp.addKeys(part,word)
-            if manager.log(mp.key): return
-            discover(mp,map_dict,manager)
-            mp.removeKeys(chars,part)
-        map_dict.update(removed)
+            chars = pm.addKeys(part,word)
+            if manager.log(pm.key): return
+            discover(matches,pm,manager)
+            pm.removeKeys(chars)
+        matches.update(removed)
     return
 
-def compareMap(mp,mapdict):
-    mapSrt = sorted(mapdict.items(),key=lambda x: len(x[1]))
-    removed,pairs = dict(),[]
-    for mapp,words in mapSrt:
-        for part in mp.mapseq[mapp]:
-            pairs = get_pairs(mp,part,words)
-            if not pairs:
-                removed[mapp] = words
-            else:
-                return pairs,removed
-    return pairs,removed
+def filter_matches(pm,matches):
+    pairings,removed = {},[]
+    for word,partials in matches.items():
+        items = find_pairs(pm,word,partials)
+        if not items:
+            removed.append(word)
+        else:
+            for item in items:
+                if item not in pairings:
+                    pairings[item] = items[item]
+                    continue
+                pairings[item] += items[item]
+    return pairs(pairings),removed
 
-def get_pairs(mp,part,words):
-    pairs = []
-    if not mp.isDecrypt(part):
-        for word in words:
-            if mp.isMatch(word,part):
-                pair = (part,word)
-                pairs.append(pair)
-    return tuple(pairs)
+
+def pairs(pairings):
+    srt = sorted(pairings.values(),key=lambda x: len(x))
+    lst = []
+    for v in srt:
+        lst += v
+    return tuple(lst)
+
+def find_pairs(pm,word,partials):
+    lex = {}
+    for partial in partials:
+        if pm.isDecrypt(partial): continue
+        elif pm.isMatch(word,partial):
+            lex[partial] = [(partial,word)]
+    return lex
 
 def sanatize(txt):
-    sanatized_txt = ""
+    clean_txt = ""
     for char in txt:
-        if char.isalpha() or char in " '":
-            sanatized_txt += char
-    return sanatized_txt.upper()
-
-if __name__ == "__main__":
-    from cryptogram.cnf import SETTINGS, cycle
-    for kwargs in config.cycle():
-        a = main(**kwargs)
-        input("Enter to continue")
+        if char.isalpha():
+            clean_txt += char.upper()
+        elif char in ["'"," "]:
+            clean_txt += char
+    return clean_txt
