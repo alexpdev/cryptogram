@@ -1,6 +1,3 @@
-# /usr/bin/python3
-# ~*~ charset: utf8 ~*~
-# Cryptogram: version 0.1.1
 #############################################################################
 ##
 ## Copyright (C) 2020 ASPDEV.
@@ -24,14 +21,38 @@
 ##
 ##
 #############################################################################
-try:
-    from . import (conf, decrypt, encrypt, init,
-                    manager, phraseMap, GUI)
-except:
-    import conf
-    import decrypt
-    import encrypt
-    import init
-    import manager
-    import phraseMap
-    import GUI
+import os
+import sys
+
+"""
+This file contains default configuration values and should not be edited
+directly. Updates can be made to the setup.py file in the root directory.
+directory. All values read in the root config.py file will overwrite values listed here.
+"""
+version_ = "0.1.1"
+
+# VARIABLES
+PHRASE = None #'QIVQOZ QFXQOT QIKQVZ UKKQVZ QIVQKZ'
+KEY = None #{"I":"X"}
+
+# PATHS
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WORDS_PATH = os.path.join(ROOT,"data","words.pickle")
+PHRASE_PATH = None #os.path.join(ROOT,"data","phrases.json")
+
+# OPTIONS
+VERBOSITY = 1
+INTERACTIVE = True
+OUTPUT = sys.stdout
+
+
+# ALL SETTINGS
+EXPORT = {
+    "BASE_DIR" : ROOT,
+    "words_file" : WORDS_PATH,
+    "key" : KEY,
+    "phrase" : PHRASE,
+    "phrase_path" : PHRASE_PATH,
+    "verbosity" : VERBOSITY,
+    "output" : OUTPUT,
+}

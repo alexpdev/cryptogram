@@ -61,6 +61,3 @@ def gen_cypher():
             r = False
         start += 1
     return dct
-
-# if __name__ == "__main__":
-#     phrase = "MOOSE ROOF FARTHER FIRE FIRST FOREMOST"

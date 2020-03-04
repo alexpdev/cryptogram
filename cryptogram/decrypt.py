@@ -1,6 +1,6 @@
 import sys,os
 from cryptogram.phraseMap import PhraseMap
-from cryptogram.manager import Manager,ResetKey,Solved
+from cryptogram.manager import Manager
 
 def main(**kwargs):
     man = Manager(**kwargs)
@@ -25,11 +25,11 @@ def discover(matches,pm,manager):
     return
 
 def filter_matches(pm,matches):
-    pairings,removed = {},[]
+    pairings,removed = {},{}
     for word,partials in matches.items():
         items = find_pairs(pm,word,partials)
         if not items:
-            removed.append(word)
+            removed[word] = partials
         else:
             for item in items:
                 if item not in pairings:

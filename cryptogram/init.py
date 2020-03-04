@@ -5,36 +5,18 @@ import sys
 import json
 import pickle
 
+from cryptogram.conf import (version_,PHRASE,KEY,ROOT,
+                            WORDS_PATH,PHRASE_PATH,
+                            VERBOSITY,INTERACTIVE,OUTPUT)
+
 try:
-    from setup import __version__
-    if "Cryptogram" not in __version__:
-        raise Exception
-    from setup import configuration
+    from setup import version
+
+    if version == version_:
+        from setup import *
+
 except:
-    from cryptogram.config import configuration
-
-cnf_keys = ["BASE_DIR","words_file","key",
-    "phrase","phrase_path","verbosity","output"]
-
-# Instance Settings
-BASE_DIR = configuration["BASE_DIR"]
-verbosity = configuration["verbosity"]
-output = configuration["output"]
-
-words_file = configuration["words_file"]
-wordset = pickle.load(open(words_file,"br"))
-
-phrase_path = configuration["phrase_path"]
-phrase = configuration["phrase"]
-key = configuration["key"]
-
-confs = {
-    "phrase" : phrase,
-    "key" : key,
-    "wordset" : wordset,
-    "verbosity": verbosity,
-    "output": output,
-}
+    pass
 
 def cycle(phrases,conf):
     for phrase in phrases:
@@ -42,8 +24,24 @@ def cycle(phrases,conf):
         conf["key"] = phrases[phrase]
         yield conf
 
-if phrase_path:
-    phrases = json.load(open(phrase_path))
+WORDSET = pickle.load(open(WORDS_PATH,"br"))
+
+
+confs = {
+    "phrase" : PHRASE,
+    "key" : KEY,
+    "wordset" : WORDSET,
+    "verbosity": VERBOSITY,
+    "output": OUTPUT,
+    "interactive": INTERACTIVE,
+}
+
+
+if PHRASE_PATH:
+    phrases = json.load(open(PHRASE_PATH))
     __settings = cycle(phrases,confs)
+else:
+    __settings = (i for i in [confs])
+
 
 SETTINGS = __settings

@@ -1,6 +1,3 @@
-# /usr/bin/python3
-# ~*~ charset: utf8 ~*~
-# Cryptogram: version 0.1.1
 #############################################################################
 ##
 ## Copyright (C) 2020 ASPDEV.
@@ -24,14 +21,30 @@
 ##
 ##
 #############################################################################
-try:
-    from . import (conf, decrypt, encrypt, init,
-                    manager, phraseMap, GUI)
-except:
-    import conf
-    import decrypt
-    import encrypt
-    import init
-    import manager
-    import phraseMap
-    import GUI
+
+import os
+import sys
+
+__version__ = "0.1.1"
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
+from cryptogram.init import SETTINGS
+from cryptogram.decrypt import main
+from cryptogram.manager import UpdateKey,Solved,EndDecrypt
+
+def start(conf):
+    try:
+        main(**conf)
+    except UpdateKey:
+        return start(conf)
+    except Solved:
+        return
+    except EndDecrypt:
+        return
+
+for conf in SETTINGS:
+    start(conf)
+
+print("Goodbye")
