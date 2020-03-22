@@ -1,11 +1,14 @@
 import sys,os
 from cryptogram.phraseMap import PhraseMap
-from cryptogram.manager import Manager
+from cryptogram.manager import TermManager
 
-def main(**kwargs):
-    man = Manager(**kwargs)
-    key = kwargs["key"]
+def decrypt(manager=None,**kwargs):
+    if not manager:
+        man = TermManager(**kwargs)
+    else:
+        man = manager
     wordset = kwargs["wordset"]
+    key = kwargs["key"]
     phrase = sanatize(kwargs["phrase"])
     pm = PhraseMap(phrase,key)
     matches = pm.filter_words(wordset)

@@ -7,7 +7,7 @@ class Solved(Exception):
 class EndDecrypt(Exception):
     pass
 
-class Manager:
+class BaseManager:
     def __init__(self,**kwargs):
         self._phrase = kwargs["phrase"]
         self.args = kwargs
@@ -21,38 +21,17 @@ class Manager:
     def log(self,key):
         keyLen = len(key)
         self.track[self.id] = key
-        if keyLen > self.amount:
-            self.review_status(key,keyLen)
-        self.amount = keyLen
         self.id += 1
+        if keyLen > self.amount:
+            self.amount = keyLen
+            self.review(key,keyLen)
         return
 
-    def review_status(self,key,keyLen):
-        if keyLen == self.total:
-            print("SOLVED!!!")
-            raise Solved
-        elif keyLen >= (self.total*.75) and keyLen >= self.frequency:
-            self.swap(key)
-            if self.update_input():
-                self.getInput(key)
-                raise UpdateKey
-        if self.id - self.last >= 500:
-            self.swap(key)
-            print(self.id)
+    def review(self,key=None,keylen=None):
+        return self._review_status(key,keylen)
 
-    def update_input(self):
-        inp = input("REFRESH KNOWN KEYS? [(y)es,(n)o,(i)ncrease,(e)nd]:")
-        if inp == "e":
-            print("ENDING DECRYPTION")
-            raise EndDecrypt
-        if inp == "i":
-            self.frequency += 1
-            print("Frequency",self.frequency,"Total",self.total)
-            return False
-        if inp != "y":
-            return False
-        else:
-            return True
+    def _review_status(self,key,keylen):
+        self.swap(key)
 
     def swap(self,key):
         phrase = ""
@@ -74,6 +53,9 @@ class Manager:
             self.frequency = int(self._total * .70)
         return self._total
 
+
+class TerminalManagerMixin():
+
     def getInput(self,key):
         for k,v in key.items():
             print("Old: ",k," New: ",v)
@@ -88,3 +70,36 @@ class Manager:
                 new_keys[char] = key[char]
         self.args["key"] = new_keys
         return
+
+    def update_input(self):
+        inp = input("REFRESH KNOWN KEYS? [(y)es,(n)o,(i)ncrease,(e)nd]:")
+        if inp == "e":
+            print("ENDING DECRYPTION")
+            raise EndDecrypt
+        if inp == "i":
+            self.frequency += 1
+            print("Frequency",self.frequency,"Total",self.total)
+            return False
+        if inp != "y":
+            return False
+        else:
+            return True
+
+
+
+class TermManager(BaseManager,TerminalManagerMixin):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+    def review(self,key,keyLen):
+        if keyLen == self.total:
+            print("SOLVED!!!")
+            raise Solved
+        elif keyLen >= (self.total*.75) and keyLen >= self.frequency:
+            self.swap(key)
+            if self.update_input():
+                self.getInput(key)
+                raise UpdateKey
+        if self.id - self.last >= 500:
+            self.swap(key)
+            print(self.id)

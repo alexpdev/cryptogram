@@ -8,7 +8,40 @@ from PyQt5.QtWidgets import (QWidget,QGridLayout,QLabel,QComboBox,
                              QListWidget,QTableWidget,QVBoxLayout,
                              QHBoxLayout,QTextEdit,QListWidgetItem)
 from PyQt5.QtGui import QFont
+from cryptogram.manager import BaseManager
+from cryptogram.decrypt import decrypt
 
+
+class GraphicalManager(BaseManager):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        self.wordset = kwargs["wordset"]
+        self.kwargs = kwargs
+
+    def review(self,key=None,keylen=None):
+        args = (self.track,key,self.id)
+        self.window.update_output(*args)
+        return
+
+    def mainloop(self):
+        app = CryptApp(sys.argv)
+        self.window = CryptUI()
+        self.window.setManager(self)
+        self.window.show()
+        sys.exit(app.exec_())
+
+
+class CryptApp(QApplication):
+    def __init__(self,args):
+        super().__init__(args)
+        self.app_title = "Cryptogram"
+
+    def __str__(self):
+        print("<QApplication>")
+
+
+class ManagerNotAssigned(Exception):
+    pass
 
 
 class CryptUI(QMainWindow):
@@ -18,7 +51,12 @@ class CryptUI(QMainWindow):
         self.setWindowTitle("CryptoGram v0.1.1")
         self.resize(800,600)
         self.key_id = 0
+        self.manager = None
         self.setupUi()
+
+    def setManager(self,man):
+        self.manager = man
+        return
 
     def setupUi(self):
         self.central = QWidget(self)
@@ -50,13 +88,9 @@ class CryptUI(QMainWindow):
         remove_keys_btn = QPushButton("&Remove Keys")
 
         # Layouts
-        HLayout1 = QHBoxLayout()
-        HLayout2 = QHBoxLayout()
         HLayout3 = QHBoxLayout()
         VLayout0 = QVBoxLayout()
         VLayout1 = QVBoxLayout()
-        VLayout2 = QVBoxLayout()
-        VLayout3 = QVBoxLayout()
         GLayout1 = QGridLayout()
         GLayout2 = QGridLayout()
 
@@ -65,9 +99,6 @@ class CryptUI(QMainWindow):
         GLayout1.addWidget(submit_btn,0,0)
         GLayout1.addWidget(self.phrase,0,1)
         GLayout1.addLayout(HLayout3,1,0,1,2)
-        # GLayout1.addWidget(self.output,1,0,1,2)
-        # VLayout2.addLayout(HLayout1)
-
 
         # Keys
         VLayout0.addWidget(oldLabel)
@@ -84,7 +115,6 @@ class CryptUI(QMainWindow):
         GLayout2.addLayout(VLayout1,0,1)
 
         # Keys + Vals + Buttons
-        # VLayout3.addLayout(HLayout2)
         GLayout2.addWidget(add_keys_btn,1,0,1,2)
         GLayout2.addWidget(remove_keys_btn,2,0,1,2)
 
@@ -101,7 +131,6 @@ class CryptUI(QMainWindow):
         self.central.setLayout(GLayout1)
         self.central.setObjectName("central")
         self.setCentralWidget(self.central)
-
 
     def remove_keys(self):
         item = self.keys.currentItem()
@@ -120,20 +149,21 @@ class CryptUI(QMainWindow):
         pass
 
     def submit_phrase(self,event):
+        keys = {}
         for row in range(self.keys.count()):
             key = self.keys.item(row)
             val = self.vals.item(row)
-            d = {self.key_id:{key.text():val.text()}}
-            self.key_id += 1
-            if self.output.toPlainText():
-                old = json.loads(self.output.toPlainText())
-                self.output.clear()
-                old.update(d)
-                d = old
-            txt = json.dumps(d)
-            self.output.setText(txt)
+            keys[key.text()] = val.text()
         phrase = self.phrase.text()
-        print(phrase)
+        kwargs = {"phrase":phrase,"key":keys,"wordset":self.manager.wordset}
+        return decrypt(self.manager,**kwargs)
+
+    def update_output(self,*args):
+        track,key,man_id = args
+        txt = json.dumps(track)
+        self.output.setPlainText(txt)
+        return
+
 
 
 if __name__ == "__main__":
