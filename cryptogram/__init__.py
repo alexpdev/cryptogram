@@ -24,14 +24,3 @@
 ##
 ##
 #############################################################################
-try:
-    from . import (conf, decrypt, encrypt, init,
-                    manager, phraseMap, GUI)
-except:
-    import conf
-    import decrypt
-    import encrypt
-    import init
-    import manager
-    import phraseMap
-    import GUI
