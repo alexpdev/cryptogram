@@ -8,7 +8,7 @@
 ## Cryptogram v0.1.1
 ## All rights reserved.
 ##
-## You may use this file under the terms of the GNU AGPLv3 license:
+## You may use this file under the terms of the PLv3 license:
 ##
 ## THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ## "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
