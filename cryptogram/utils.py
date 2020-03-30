@@ -30,7 +30,7 @@ import time
 from pathlib import Path
 from cryptogram.phraseMap import PhraseMap
 
-WORDS = Path(__file__).resolve().parent.parent / "data" / "allWords.json"
+WORDS = Path(__file__).resolve().parent / "data" / "allWords.json"
 STOP_SIG = False
 
 def stop_decryption():
