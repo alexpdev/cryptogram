@@ -5,3 +5,5 @@ phrases.json
 venv/
 .vscode/
 __pycache__/
+gcomwords.txt
+WordData.json

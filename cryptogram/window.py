@@ -107,7 +107,7 @@ class Window(QMainWindow):
         self.vertWidg = QWidget()
         self.vertWidg.setLayout(self.vlayout)
         self.splitter = QSplitter(parent=self.central)
-        self.splitter.setStretchFactor(3,2)
+        self.splitter.setStretchFactor(1,3)
         self.splitter.setOrientation(Qt.Vertical)
         self.splitter2 = QSplitter(parent=self.central)
         self.splitter2.addWidget(self.vertWidg)
