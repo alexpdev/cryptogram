@@ -61,7 +61,7 @@ class PhraseMap:
             if char in self.key:
                 if self.key[char] != word[i]:
                     return False
-            elif word[i] in vals:
+            elif word[i] in vals or char == word[i]:
                 return False
         return True
 

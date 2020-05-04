@@ -56,12 +56,12 @@ def discover(matches,pm,window):
         for k in removed:
             del matches[k]
         for part,word in pairs:
-            window.add_word(part)
+            window.add_word(part,word)
             chars = pm.addKeys(part,word)
             discover(matches,pm,window)
             if check_end(): return
             pm.removeKeys(chars)
-            window.remove_word(part)
+            window.remove_word(part,word)
         matches.update(removed)
         time.sleep(.5)
     return

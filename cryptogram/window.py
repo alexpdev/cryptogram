@@ -89,7 +89,7 @@ class Window(QMainWindow):
         self.btn4 = QPushButton("Remove Key",parent=self)
         self.word_table = QTableWidget(parent=self)
         self.word_table.setObjectName("WordTable")
-        self.word_table.setRowCount(1)
+        self.word_table.setRowCount(2)
         return
 
     def setup_layout(self):
@@ -173,15 +173,20 @@ class Window(QMainWindow):
         QCoreApplication.processEvents()
         return
 
-    def add_word(self,val):
-        idx = self.word_table.rowCount()
+    def add_word(self,val,val2):
+        idx = self.word_table.columnCount()
+        self.word_table.setColumnCount(idx+1)
         item = QTableWidgetItem(val)
+        item2 = QTableWidgetItem(val2)
         self.word_table.setItem(0,idx,item)
+        self.word_table.setItem(1,idx,item2)
         return
 
-    def remove_word(self,val):
-        idx = self.word_table.rowCount()
+    def remove_word(self,val,val2):
+        idx = self.word_table.columnCount()
         item = self.word_table.takeItem(0,idx-1)
+        item = self.word_table.takeItem(1,idx-1)
+        self.word_table.setColumnCount(idx-1)
         del item
         return
 

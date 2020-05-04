@@ -28,8 +28,8 @@ import random
 import string
 
 def encrypt(phrase):
-    """encrypts string with randomly generated character
-    substitution cypher. returns encrypted text and key"""
+    """ encrypts string with randomly generated character
+    substitution cypher. returns encrypted text and key """
     alpha,cv,vc = [i for i in string.ascii_uppercase],{},{}
     txt = ""
     for char in phrase.upper():
