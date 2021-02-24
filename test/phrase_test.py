@@ -1,7 +1,5 @@
 from unittest import TestCase
-from pathlib import Path
-import os
-import sys
+import os,sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.phrase import Phrase,Word
 
@@ -16,7 +14,7 @@ class TestPhraseClass(TestCase):
         self.assertIsInstance(phrase,Phrase)
         self.assertEqual(self.phrase,phrase.txt)
         self.assertEqual(self.table,phrase.table)
-        self.assertEqual(self.words,[])
+        self.assertEqual(phrase.words,[])
 
     def test_phrase_decrypt(self):
         temp = ""
@@ -26,7 +24,7 @@ class TestPhraseClass(TestCase):
             else:
                 temp += char
         phrase = Phrase(self.phrase,self.table)
-        decrypted_txt = phrase.decypt()
+        decrypted_txt = phrase.decrypt()
         self.assertEqual(temp,decrypted_txt)
 
     def test_phrase_split_words(self):
