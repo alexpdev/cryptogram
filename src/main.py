@@ -4,14 +4,17 @@ import os
 import json
 import sys
 from time import time
+sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+from src.phrase import Phrase
 
-
-PROGRAM_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-sys.path.append(PROGRAM_DIR)
 PHRASES = json.load(open("data\\phrases.json","rt"))
+DEBUG = False
 
 def main():
     for phrase,table in PHRASES.items():
-        print(phrase,table)
+        p = Phrase(phrase,table)
+        p.split_words()
+        word = p.next_word()
+        print(word,word.matches)
 
 main()
