@@ -13,6 +13,7 @@ class Phrase:
         self.table = table
         self.words = []
         self.changes = {}
+        self.split_words()
 
     def decrypt(self):
         temp_txt = ""
@@ -62,9 +63,6 @@ class Phrase:
         return
 
 
-
-
-
 class Word(str):
     all_words = ALL_WORDS
 
@@ -73,6 +71,7 @@ class Word(str):
         self.matches = set()
         self.txt = txt
         self.num_map = ""
+        self.find_matches()
 
     def gen_map(self):
         mapping, start = {}, 1
@@ -88,7 +87,7 @@ class Word(str):
         if char in mapping:
             return mapping[char], start
         mapping[char] = str(start)
-        return str(start), start +1
+        return str(start), start + 1
 
 
     def compare(self,other):

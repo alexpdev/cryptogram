@@ -32,10 +32,3 @@ key = {
 ```
 
 ----
-
-## Instructions ##
-
-* Open *config.py*
-* Put cryptogram text in the *phrase* field
-* (optional) put known `key : value` pairs in the *key* field
-* run **decrypt.py**

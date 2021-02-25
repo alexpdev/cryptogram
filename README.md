@@ -1,14 +1,12 @@
-# Un-Cryptogram v0.1
+# Cryptogram v0.0.1
 
-Un-Cryptogram is a small application for decrypting and solving simple character substitution encrypted text,
-commonly called a *Cryptogram*.
-------------
+Cryptogram is a small application for decrypting and solving simple character substitution encrypted text, commonly called a *Cryptogram*.
 
 ## Getting Started
 
 In order to try out Cryptogram, simply clone the repo, or download and unzip the package into an empty directory.
-Open up a terminal, navigate to the newly created directory, and enter `python cryptogram/window.py`
-or on *Windows* `python cryptogram\window.py`.
+Open up a terminal, navigate to the newly created directory, and enter `python3 src/window.py`
+or on *Windows* `python src\window.py`.
 
 ### Prerequisites
 
@@ -18,7 +16,7 @@ for this specific project.
 
 ```python
 Python 3.*
-PyQt5~=*
+PyQt6~=*
 ```
 
 ### Installing
@@ -29,11 +27,10 @@ PyQt5~=*
 - ensure Python 3.* is installed and functioning properly.
 - Open a terminal and navigate to the directory containing the project.
 - enter `$ python -m venv venv #<-(or desired name for your virtual python enviornment)`
-- activate your virtual enviornment, this is done by invoking a activate.bat script on windows or with the "source" command on unix
-- run `python -m pip install --upgrade pip`.
-- run `pip install requirements.txt`
+- activate your virtual enviornment *windows* `env\Scripts\activate.bat`  or `source env/bin/activate.sh`
+- run `python3 -m pip install --upgrade pip`.
+- run `pip install requirements.txt`.
 - run `python cryptogram/window.py`.
-- That's it.
 
 ### Example
 
