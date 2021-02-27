@@ -15,6 +15,13 @@ class Phrase:
         self.changes = {}
         self.split_words()
 
+    def author_words(self):
+        amount = 0
+        if "-" in self.raw:
+            s = self.raw[(self.raw.index("-")+1):]
+            amount = len(s.split(" "))
+        return amount
+
     def decrypt(self):
         temp_txt = ""
         for char in self.txt:
@@ -25,17 +32,19 @@ class Phrase:
         return temp_txt
 
     def split_words(self):
+        auth_words,parent = self.author_words(),self
         words = self.txt.split(" ")
-        for word in words:
-            obj = Word(word)
+        for word in words[:]:
+            obj = Word(word,parent)
             self.words.append(obj)
         return self.words
 
     def next_word(self):
         temp, matches = None, None
         for word in self.words:
-            if not word.matches: word.find_matches()
-            in_map = [i for i in word if i not in self.table]
+            if word.matches:
+                word.find_matches(word_set=word.matches)
+            in_map = [i for i in word.txt if i not in self.table]
             if not in_map: continue
             if not temp or len(word.matches) < matches:
                 temp, matches = word, len(word.matches)
@@ -47,12 +56,12 @@ class Phrase:
             for item in self.table.items():
                 if item[1] == y and item[0] != x:
                     return False
-                else: continue
             if x in self.table and self.table[x] != y:
                 return False
             temp_table[x] = y
         self.changes[word] = temp_table
         self.table.update(temp_table)
+        return True
 
     def remove_word(self,word):
         changes = self.changes[word]
@@ -63,47 +72,65 @@ class Phrase:
         return
 
 
-class Word(str):
+class Word:
     all_words = ALL_WORDS
 
-    def __init__(self,txt):
-        self.table = {}
-        self.matches = set()
+    def __init__(self,txt,parent):
         self.txt = txt
-        self.num_map = ""
+        self.word_code = ""
+        self._parent = parent
+        self.matches = set()
         self.find_matches()
 
-    def gen_map(self):
-        mapping, start = {}, 1
-        for char in self.txt:
-            new_char,new_start = self.next_char(char,mapping,start)
-            self.num_map += new_char
-            start = new_start
-        return mapping
+    def __str__(self):
+        return self.txt
 
-    def next_char(self,char,mapping,start):
-        if char in "'":
-            return char, start
-        if char in mapping:
-            return mapping[char], start
-        mapping[char] = str(start)
-        return str(start), start + 1
+    def parent(self):
+        return self._parent
 
-
-    def compare(self,other):
-        if len(other) != len(self.txt): return False
-        num_map, start, mapping = "", 1, {}
-        for char in other:
-            new_char,new_start = self.next_char(char,mapping,start)
-            num_map += new_char
-            start = new_start
-            if num_map not in self.num_map:
-                return False
-        return True
-
-    def find_matches(self):
-        if not self.num_map: self.gen_map()
-        for word in self.all_words:
+    def find_matches(self,word_set=None):
+        if not word_set:
+            word_set = self.all_words
+        self.gen_code()
+        self.matches = set()
+        for word in word_set:
             if self.compare(word):
                 self.matches.add(word)
         return self.matches
+
+    def gen_code(self):
+        table,mapping,start = self.parent().table,{},1
+        for char in self.txt:
+            if char == "'":
+                self.word_code += "'"
+            if char in table:
+                self.word_code += table[char]
+            elif char in mapping:
+                self.word_code += mapping[char]
+            else:
+                self.word_code += str(start)
+                mapping[char] = str(start)
+                start += 1
+        return mapping
+
+    def compare(self,other):
+        if len(self.txt) != len(other):
+            return False
+        code, start, mapping = "", 1, {}
+        for i,char in enumerate(other):
+            txt_i = self.word_code[i]
+            if txt_i.isalpha():
+                if txt_i != char:
+                    return False
+                code += char
+            elif char == "'":
+                code += char
+            elif char in mapping:
+                code += mapping[char]
+            else:
+                code += str(start)
+                mapping[char] = str(start)
+                start += 1
+            if code not in self.word_code:
+                return False
+        return True
