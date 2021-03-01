@@ -32,39 +32,31 @@ class Phrase:
             self.words.append(obj)
         return self.words
 
-    def solve(self):
-        word = self.next_word()
-        match = next((match for match in word.matches))
-        keys = self.add_keys(word,match)
-        return word, match, keys
+    def add_keys(self,old,new):
+        changes = {}
+        for k,v in zip(old,new):
+            if k not in self.table:
+                self.table[k] = v
+                changes[k] = v
+        self.changes[new] = changes
+        self.find_matches()
 
-    def add_keys(self,word,match):
-        temp_table = {}
-        for k,v in zip(word.txt,match):
-            if k not in self.table and k != "'":
-                temp_table[k] = v
-        self.table.update(temp_table)
-        self.changes[word.txt] = temp_table
-        return temp_table
+    def find_matches(self):
+        [word.find_matches() for word in self.words]
 
+    def remove_keys(self,match):
+        chars = self.changes[match]
+        for k,v in chars.items():
+            del self.table[k]
+        del self.changes[match]
+        self.find_matches()
+        return chars
 
-
-
-    def next_word(self):
-        temp_word, matches_len = None, None
-        for i,word in enumerate(self.words):
-            if len(self.words) > 4 and i > len(self.words) -3: continue
-            l = len([char for char in word.txt
-                    if char in self.table or char == "'"])
-            if l == len(word.txt): continue
-            word.find_matches()
-            if not len(word.matches): continue
-            if not temp_word or len(word.matches) < matches_len:
-                temp_word = word
-                matches_len = len(word.matches)
-        return temp_word
-
-
+    def get_key(self,char):
+        for k,v in self.table.items():
+            if v == char:
+                return k
+        return
 
 class Word:
     all_words = ALL_WORDS
@@ -113,6 +105,9 @@ class Word:
         code, start, mapping = "", 1, {}
         for i,char in enumerate(other):
             txt_i = self.word_code[i]
+            if char in self.parent().table.values():
+                if self.parent().get_key(char) != self.txt[i]:
+                    return False
             if txt_i.isalpha():
                 if txt_i != char:
                     return False

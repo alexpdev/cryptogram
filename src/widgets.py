@@ -69,6 +69,9 @@ class Table(QTableWidget):
     def remove_row(self,row):
         self.removeRow(row)
 
+    def remove_keys(keys):
+        pass
+
     def add_chars(self,old,new):
         row_num = self.rowCount()
         self.insertRow(row_num)
@@ -276,11 +279,10 @@ class SubmitPhraseButton(QPushButton):
         self._window = window
 
     def submit(self):
-        window = self.window()
-        text = window.line_edit.text()
+        text = self.window().line_edit.text()
         phrase = Phrase(text)
-        window.setPhrase(phrase)
-        wordlist = window.word_list
+        self.window().setPhrase(phrase)
+        wordlist = self.window().word_list
         print(phrase.words)
         wordlist.add_items(phrase.words)
 
@@ -332,19 +334,9 @@ class SolveButton(QPushButton):
         self.pressed.connect(self.solve)
 
     def solve(self):
-        if phrase := self.window().phrase:
-            chars = self.window().table.get_chars()
-            phrase.table.update(chars)
-            word,match,keys = phrase.solve()
-            self.window().chosen_list.add_item(match)
-            for k,v in keys.items():
-                self.window().table.add_chars(k,v)
-            decrypted = phrase.decrypt()
-            print(decrypted)
-            self.window().text_browser.insertPlainText(decrypted + "\n")
-            return
-
-
+        driver = self.window().driver
+        phrase = self.window().phrase
+        driver.solve(phrase)
 
     def window(self):
         return self._window

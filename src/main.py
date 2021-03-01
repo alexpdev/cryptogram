@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import os
 import json
 import sys
-from time import time
+from PyQt6.QtWidgets import QApplication
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
-from src.phrase import Phrase
+from src.driver import Driver
+from src.gui import Window
 
 PHRASES = json.load(open("data\\phrases.json","rt"))
-DEBUG = False
 
 def main():
-    for phrase,table in PHRASES.items():
-        p = Phrase(phrase,table)
-        p.split_words()
-        word = p.next_word()
-        print(word,word.matches)
+    app = QApplication(sys.argv)
+    main = Window(app,parent=None)
+    driver = Driver()
+    main.setDriver(driver)
+    main.show()
+    sys.exit(app.exec())
 
-main()
+if __name__ == "__main__":
+    main()
+
+

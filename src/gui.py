@@ -1,28 +1,25 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.widgets import (WordLabel, MatchesLabel, UpperComboBox,
-                        WordList, MatchesList, FileMenu,
-                        SubmitPhraseButton, SubmitCharButton,
+from src.widgets import (UpperComboBox, WordList, MatchesList,
+                        FileMenu, SubmitPhraseButton, SubmitCharButton,
                         ChosenList, RemoveWordButton, RemoveCharButton,
                         Table, SolveButton, AutoCheck)
-from PyQt6.QtWidgets import (QApplication, QMainWindow,
-                            QWidget, QMenuBar,
+from PyQt6.QtWidgets import (QMainWindow, QWidget, QMenuBar,
                             QVBoxLayout, QHBoxLayout, QGridLayout,
                             QLineEdit, QTextBrowser, QStatusBar)
-
+from src.driver import Driver
 
 class Window(QMainWindow):
     def __init__(self,app,parent=None):
         super().__init__(parent=parent)
         self.app = app
         self._phrase = None
+        self._driver = None
         self.setObjectName("Window")
         self.resize(900,800)
         self.setup_ui()
+        self.assign_window()
 
     def setup_ui(self):
         self.central = QWidget(self)
@@ -91,9 +88,9 @@ class Window(QMainWindow):
                             self.matches_list, self.old_combo, self.new_combo,
                             self.file_menu]
 
-    def setWidgetWindow(self,window):
+    def assign_window(self):
         for widget in self.custom_widgets:
-            widget.setWindow(window)
+            widget.setWindow(self)
 
     @property
     def phrase(self):
@@ -102,12 +99,9 @@ class Window(QMainWindow):
     def setPhrase(self,phrase):
         self._phrase = phrase
 
+    @property
+    def driver(self):
+        return self._driver
 
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    main = Window(app,parent=None)
-    main.show()
-    main.setWidgetWindow(main)
-    # main.after()
-    sys.exit(app.exec())
+    def setDriver(self,driver):
+        self._driver = driver
