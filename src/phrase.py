@@ -15,13 +15,6 @@ class Phrase:
         self.changes = {}
         self.split_words()
 
-    def author_words(self):
-        amount = 0
-        if "-" in self.raw:
-            s = self.raw[(self.raw.index("-")+1):]
-            amount = len(s.split(" "))
-        return amount
-
     def decrypt(self):
         temp_txt = ""
         for char in self.txt:
@@ -32,44 +25,45 @@ class Phrase:
         return temp_txt
 
     def split_words(self):
-        auth_words,parent = self.author_words(),self
+        parent = self
         words = self.txt.split(" ")
         for word in words[:]:
             obj = Word(word,parent)
             self.words.append(obj)
         return self.words
 
-    def next_word(self):
-        temp, matches = None, None
-        for word in self.words:
-            if word.matches:
-                word.find_matches(word_set=word.matches)
-            in_map = [i for i in word.txt if i not in self.table]
-            if not in_map: continue
-            if not temp or len(word.matches) < matches:
-                temp, matches = word, len(word.matches)
-        return temp
+    def solve(self):
+        word = self.next_word()
+        match = next((match for match in word.matches))
+        keys = self.add_keys(word,match)
+        return word, match, keys
 
-    def add_word(self,txt,word):
+    def add_keys(self,word,match):
         temp_table = {}
-        for x,y in zip(txt,word):
-            for item in self.table.items():
-                if item[1] == y and item[0] != x:
-                    return False
-            if x in self.table and self.table[x] != y:
-                return False
-            temp_table[x] = y
-        self.changes[word] = temp_table
+        for k,v in zip(word.txt,match):
+            if k not in self.table and k != "'":
+                temp_table[k] = v
         self.table.update(temp_table)
-        return True
+        self.changes[word.txt] = temp_table
+        return temp_table
 
-    def remove_word(self,word):
-        changes = self.changes[word]
-        for k,v in changes.items():
-            if self.table[k] == v:
-                del self.table[k]
-        del self.changes[word]
-        return
+
+
+
+    def next_word(self):
+        temp_word, matches_len = None, None
+        for i,word in enumerate(self.words):
+            if len(self.words) > 4 and i > len(self.words) -3: continue
+            l = len([char for char in word.txt
+                    if char in self.table or char == "'"])
+            if l == len(word.txt): continue
+            word.find_matches()
+            if not len(word.matches): continue
+            if not temp_word or len(word.matches) < matches_len:
+                temp_word = word
+                matches_len = len(word.matches)
+        return temp_word
+
 
 
 class Word:

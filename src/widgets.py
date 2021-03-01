@@ -21,7 +21,6 @@ class TableItem(QTableWidgetItem):
         super().__init__(type=type)
         self.row = None
         self.column = None
-        self.text = None
         self._window = None
 
     def window(self):
@@ -51,6 +50,14 @@ class Table(QTableWidget):
 
     def window(self):
         return self._window
+
+    def get_chars(self):
+        chars = {}
+        for index in range(self.rowCount()):
+            old = self.item(index,0).text()
+            new = self.item(index,1).text()
+            chars[old] = new
+        return chars
 
     def setWindow(self,window):
         self._window = window
@@ -325,20 +332,19 @@ class SolveButton(QPushButton):
         self.pressed.connect(self.solve)
 
     def solve(self):
-        window = self.parent()
-        word = window.phrase.next_word()
-        print("word: ", word)
-        match = next((i for i in word.matches))
-        print("match: ", match)
-        found_match = False
-        while not found_match:
-            if window.phrase.add_word(word,match):
-                found_match = True
-                for k,v in window.phrase.changes[word].items():
-                    window.table.add_chars(k,v)
-                    print("adding: ", k," ",v)
-                    window.text_browser.insertPlainText(window.phrase.decrypt())
-                    print(window.phrase.decrypt())
+        if phrase := self.window().phrase:
+            chars = self.window().table.get_chars()
+            phrase.table.update(chars)
+            word,match,keys = phrase.solve()
+            self.window().chosen_list.add_item(match)
+            for k,v in keys.items():
+                self.window().table.add_chars(k,v)
+            decrypted = phrase.decrypt()
+            print(decrypted)
+            self.window().text_browser.insertPlainText(decrypted + "\n")
+            return
+
+
 
     def window(self):
         return self._window
