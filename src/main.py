@@ -1,4 +1,6 @@
-#!/usr/bin/env python3
+#! /usr/bin/python3
+#-*- coding: utf-8 -*-
+
 import os
 import json
 import sys
@@ -12,12 +14,14 @@ PHRASES = json.load(open("data\\phrases.json","rt"))
 def main():
     app = QApplication(sys.argv)
     main = Window(app,parent=None)
-    driver = Driver()
+    driver = Driver(window=main)
     main.setDriver(driver)
     main.show()
     sys.exit(app.exec())
 
+
+
+
+
 if __name__ == "__main__":
     main()
-
-

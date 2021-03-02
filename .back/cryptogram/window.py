@@ -119,7 +119,6 @@ class Window(QMainWindow):
 
     def remove_from_key(self):
         idxs = self.key_table.currentRow()
-        print(idxs)
         self.key_table.removeRow(idxs)
 
     def add_to_key(self):

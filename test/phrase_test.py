@@ -1,7 +1,7 @@
 from unittest import TestCase
 import os,sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.phrase import Phrase,Word
+from src.phrase import Phrase,sanatize
 
 class TestPhraseClass(TestCase):
 
@@ -12,13 +12,12 @@ class TestPhraseClass(TestCase):
     def test_phrase_initialization(self):
         phrase = Phrase(self.phrase,self.table)
         self.assertIsInstance(phrase,Phrase)
-        self.assertEqual(self.phrase,phrase.txt)
+        self.assertEqual(self.phrase,phrase.raw)
         self.assertEqual(self.table,phrase.table)
-        self.assertEqual(phrase.words,[])
 
     def test_phrase_decrypt(self):
         temp = ""
-        for char in self.phrase:
+        for char in sanatize(self.phrase):
             if char in self.table:
                 temp += self.table[char]
             else:
@@ -27,9 +26,13 @@ class TestPhraseClass(TestCase):
         decrypted_txt = phrase.decrypt()
         self.assertEqual(temp,decrypted_txt)
 
-    def test_phrase_split_words(self):
-        phrase = Phrase(self.phrase,self.table)
-        words = [Word(i) for i in self.phrase.split(" ")]
-        self.assertEqual(words,phrase.split_words())
-        self.assertEqual(words,phrase.words)
+    # def test_phrase_split_words(self):
+    #     p = sanatize(self.phrase)
+    #     phrase = Phrase(self.phrase,self.table)
+    #     word_count = len(p.split(" "))
+    #     self.assertEqual(word_count,phrase.split_words())
 
+    def test_sanatize(self):
+        sanatized = "PAO XN XNVZ MKPMOZ LMCD JN JAD XNNL PADW JAD XNNLQDKK LTWVZ TJ'S AMLXKO DYDL UNL JADB"
+        clean_phrase = sanatize(self.phrase)
+        self.assertEqual(sanatized,clean_phrase)

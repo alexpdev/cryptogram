@@ -8,7 +8,6 @@ from src.widgets import (UpperComboBox, WordList, MatchesList,
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QMenuBar,
                             QVBoxLayout, QHBoxLayout, QGridLayout,
                             QLineEdit, QTextBrowser, QStatusBar)
-from src.driver import Driver
 
 class Window(QMainWindow):
     def __init__(self,app,parent=None):
@@ -20,6 +19,14 @@ class Window(QMainWindow):
         self.resize(900,800)
         self.setup_ui()
         self.assign_window()
+
+    @property
+    def phrase(self):
+        return self._phrase
+
+    @property
+    def driver(self):
+        return self._driver
 
     def setup_ui(self):
         self.central = QWidget(self)
@@ -92,16 +99,13 @@ class Window(QMainWindow):
         for widget in self.custom_widgets:
             widget.setWindow(self)
 
-    @property
-    def phrase(self):
-        return self._phrase
-
     def setPhrase(self,phrase):
         self._phrase = phrase
-
-    @property
-    def driver(self):
-        return self._driver
+        self.driver.setPhrase(phrase)
 
     def setDriver(self,driver):
         self._driver = driver
+
+    def re_update(self):
+        self.update()
+        self.repaint()

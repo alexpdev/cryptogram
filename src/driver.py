@@ -5,20 +5,31 @@ class Driver:
 
     def __init__(self,window=None):
         self._window = window
+        self._phrase = None
 
     @property
     def window(self):
         return self._window
 
-    def solve(self,phrase):
-        words = phrase.words
-        new_word_list = self.order_words(words)
-        self.solve1(phrase,new_word_list)
+    @property
+    def phrase(self):
+        return self._phrase
+
+    def setPhrase(self,phrase):
+        self._phrase = phrase
+
+    def solve(self,table):
+        self.phrase.table = table
+        self.phrase.find_matches()
+        new_word_list = self.order_words(self.phrase.words)
+        self.solve1(self.phrase,new_word_list)
 
     def solve1(self,phrase,words):
         if not len(words):
+            print("no words")
             return
         for i1,word in enumerate(words[:]):
+            print("solving" + ("."*15))
             matches = list(word.matches)
             del words[i1]
             for match in matches:
@@ -28,6 +39,7 @@ class Driver:
                 self.solve1(phrase,words)
                 chars = self.phrase.remove_keys(match)
                 self.window.table.remove_keys(chars)
+                self.window.re_update()
             words.append(word)
         return
 

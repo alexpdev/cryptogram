@@ -115,6 +115,5 @@ def gen_phrase(pm):
 
 def check_end():
     if STOP_SIG == True:
-        print(STOP_SIG)
         time.sleep(.5)
         return True

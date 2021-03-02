@@ -51,16 +51,16 @@ class Table(QTableWidget):
     def window(self):
         return self._window
 
-    def get_chars(self):
-        chars = {}
-        for index in range(self.rowCount()):
-            old = self.item(index,0).text()
-            new = self.item(index,1).text()
-            chars[old] = new
-        return chars
-
     def setWindow(self,window):
         self._window = window
+
+    def get_contents(self):
+        chars = {}
+        for num in range(self.rowCount()):
+            old = self.item(num,0).text()
+            new = self.item(num,1).text()
+            chars[old] = new
+        return chars
 
     def select_row(self):
         row = self.currentRow()
@@ -69,8 +69,10 @@ class Table(QTableWidget):
     def remove_row(self,row):
         self.removeRow(row)
 
-    def remove_keys(keys):
-        pass
+    def remove_keys(self,chars):
+        for num in list(range(0,self.rowCount()))[::-1]:
+            if self.item(num,0).text() in chars:
+                self.remove_row(num)
 
     def add_chars(self,old,new):
         row_num = self.rowCount()
@@ -96,63 +98,12 @@ class UpperComboBox(QComboBox):
     def setWindow(self,window):
         self._window = window
 
-
 class BoldFont(QFont):
 
     def __init__(self):
         super().__init__()
         self.setBold(True)
 
-
-class WordLabel(QLabel):
-
-    def __init__(self,parent=None):
-        super().__init__(parent=parent)
-        self._window = None
-        self.setObjectName("word_label")
-        self.setText("Words")
-        self.setFont(BoldFont())
-        self.setIndent(8)
-
-    def window(self):
-        return self._window
-
-    def setWindow(self,window):
-        self._window = window
-
-
-class MatchesLabel(QLabel):
-
-    def __init__(self,parent=None):
-        super().__init__(parent=parent)
-        self._window = None
-        self.setObjectName("matches_label")
-        self.setText("Matches")
-        self.setFont(BoldFont())
-        self.setIndent(8)
-
-    def window(self):
-        return self._window
-
-    def setWindow(self,window):
-        self._window = window
-
-
-class TranslationLabel(QLabel):
-
-    def __init__(self,parent=None):
-        super().__init__(parent=parent)
-        self._window = None
-        self.setObjectName("translation_label")
-        self.setText("Character Translation Table")
-        self.setFont(BoldFont())
-        self.setIndent(8)
-
-    def window(self):
-        return self._window
-
-    def setWindow(self,window):
-        self._window = window
 
 class FileMenu(QMenu):
 
@@ -207,7 +158,6 @@ class WordList(QListWidget):
 
     def add_items(self,items):
         for item in items:
-            print(item)
             word = WordListItem(item,parent=self)
             self.addItem(word)
 
@@ -280,12 +230,11 @@ class SubmitPhraseButton(QPushButton):
 
     def submit(self):
         text = self.window().line_edit.text()
-        phrase = Phrase(text)
+        table = self.window().table.get_contents()
+        phrase = Phrase(text,table=table)
         self.window().setPhrase(phrase)
         wordlist = self.window().word_list
-        print(phrase.words)
         wordlist.add_items(phrase.words)
-
 
 class RemoveCharButton(QPushButton):
 
@@ -334,9 +283,8 @@ class SolveButton(QPushButton):
         self.pressed.connect(self.solve)
 
     def solve(self):
-        driver = self.window().driver
-        phrase = self.window().phrase
-        driver.solve(phrase)
+        table = self.window().table.get_contents()
+        self.window().driver.solve(table)
 
     def window(self):
         return self._window
@@ -378,5 +326,52 @@ class AutoCheck(QCheckBox):
     def setWindow(self,window):
         self._window = window
 
+class WordLabel(QLabel):
+
+    def __init__(self,parent=None):
+        super().__init__(parent=parent)
+        self._window = None
+        self.setObjectName("word_label")
+        self.setText("Words")
+        self.setFont(BoldFont())
+        self.setIndent(8)
+
+    def window(self):
+        return self._window
+
+    def setWindow(self,window):
+        self._window = window
+
+class MatchesLabel(QLabel):
+
+    def __init__(self,parent=None):
+        super().__init__(parent=parent)
+        self._window = None
+        self.setObjectName("matches_label")
+        self.setText("Matches")
+        self.setFont(BoldFont())
+        self.setIndent(8)
+
+    def window(self):
+        return self._window
+
+    def setWindow(self,window):
+        self._window = window
+
+class TranslationLabel(QLabel):
+
+    def __init__(self,parent=None):
+        super().__init__(parent=parent)
+        self._window = None
+        self.setObjectName("translation_label")
+        self.setText("Character Translation Table")
+        self.setFont(BoldFont())
+        self.setIndent(8)
+
+    def window(self):
+        return self._window
+
+    def setWindow(self,window):
+        self._window = window
 
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
