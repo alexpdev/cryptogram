@@ -74,6 +74,10 @@ class Table(QTableWidget):
             if self.item(num,0).text() in chars:
                 self.remove_row(num)
 
+    def add_changes(self,changes):
+        for k,v in changes.items():
+            self.add_chars(k,v)
+
     def add_chars(self,old,new):
         row_num = self.rowCount()
         self.insertRow(row_num)
@@ -152,9 +156,11 @@ class WordList(QListWidget):
 
     def fill_matches(self):
         matches_list = self.window().matches_list
-        if word := self.currentItem():
-            matches = list(word.obj.matches)
-            matches_list.add_items(matches)
+        if not matches_list:
+            matches_list.clear()
+        word = self.currentItem()
+        matches = list(word.obj.matches)
+        matches_list.add_items(matches)
 
     def add_items(self,items):
         for item in items:
@@ -165,9 +171,16 @@ class WordListItem(QListWidgetItem):
 
     def __init__(self,obj,parent=None):
         super().__init__(parent=parent)
+        self._word = None
         self.obj = obj
         self.setText(str(obj))
         self._window = None
+
+    def setWord(self,word):
+        self._word = word
+
+    def getWord(self):
+        return self._word
 
     def window(self):
         return self._window
@@ -192,8 +205,22 @@ class ChosenList(QListWidget):
     def setWindow(self,window):
         self._window = window
 
-    def add_item(self,word):
+    def add_item(self,match):
+        word = WordListItem(match,parent=self)
         self.addItem(word)
+
+    def remove_word(self):
+        for item in self.selectedItems():
+            row = self.indexFromItem(item).row()
+            self.window().driver.undo_changes(item.text())
+            self.takeItem(row)
+
+    def remove_match(self,match):
+        for row in range(self.count()):
+            if self.item(row).text() == match:
+                self.takeItem(row)
+                self.window().driver.undo_changes(match)
+
 
 class MatchesList(QListWidget):
 
@@ -201,6 +228,14 @@ class MatchesList(QListWidget):
         super().__init__(parent=parent)
         self.setObjectName("Matches_List")
         self._window = None
+        self.doubleClicked.connect(self.match_selected)
+
+    def match_selected(self):
+        match = self.currentItem()
+        word = self.window().word_list.currentItem()
+        self.window().driver.match_selected(word.text(),match.text())
+        self.window().driver.decrypt()
+        self.window().word_list.fill_matches()
 
     def window(self):
         return self._window
@@ -212,6 +247,7 @@ class MatchesList(QListWidget):
         self.clear()
         for item in items:
             self.addItem(item)
+
 
 class SubmitPhraseButton(QPushButton):
 
@@ -254,6 +290,7 @@ class RemoveCharButton(QPushButton):
     def remove(self):
         row = self.window().table.currentRow()
         self.window().table.remove_row(row)
+        self.window().driver.decrypt()
 
 class RemoveWordButton(QPushButton):
 
@@ -262,7 +299,7 @@ class RemoveWordButton(QPushButton):
         self._window = None
         self.setObjectName("remove_word")
         self.setText("Remove Word")
-        self.pressed.connect(self.remove_word)
+        self.pressed.connect(self.remove_selected)
 
     def window(self):
         return self._window
@@ -270,8 +307,9 @@ class RemoveWordButton(QPushButton):
     def setWindow(self,window):
         self._window = window
 
-    def remove_word(self):
+    def remove_selected(self):
         self.window().chosen_list.remove_word()
+        self.window().driver.decrypt()
 
 class SolveButton(QPushButton):
 
@@ -311,6 +349,7 @@ class SubmitCharButton(QPushButton):
         old_txt = self.window().old_combo.currentText()
         new_txt = self.window().new_combo.currentText()
         self.window().table.add_chars(old_txt,new_txt)
+        self.window().driver.decrypt()
 
 class AutoCheck(QCheckBox):
 

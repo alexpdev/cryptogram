@@ -95,6 +95,12 @@ class Window(QMainWindow):
                             self.matches_list, self.old_combo, self.new_combo,
                             self.file_menu]
 
+    def re_update(self):
+        widgets = [self.table,self.chosen_list,self.word_list,self.matches_list,self.text_browser, self.line_edit]
+        for widget in widgets:
+            widget.repaint()
+
+
     def assign_window(self):
         for widget in self.custom_widgets:
             widget.setWindow(self)

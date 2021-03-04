@@ -34,7 +34,7 @@ class Phrase:
         words = self.txt.split(" ")
         phrase_object = self
         for word in words:
-            obj = Word.create(word,phrase_object)
+            obj = Word.new(word,phrase_object)
             self.words.append(obj)
         return self.words
 
@@ -44,19 +44,26 @@ class Phrase:
             if k not in self.table:
                 self.table[k] = v
                 changes[k] = v
-        self.changes[new] = changes
+        self.add_changes(old,new,changes)
         self.find_matches()
+        return changes
 
     def find_matches(self):
         [word.find_matches() for word in self.words]
 
     def remove_keys(self,match):
-        chars = self.changes[match]
-        for k,v in chars.items():
-            del self.table[k]
-        del self.changes[match]
+        chars = self.changes[match][0]
+        for char in chars:
+            del self.table[char]
+        self.remove_changes(match)
         self.find_matches()
         return chars
+
+    def add_changes(self,old,new,changes):
+        self.changes[new] = (changes,old)
+
+    def remove_changes(self,word):
+        del self.changes[word]
 
     def get_key(self,char):
         for k,v in self.table.items():
@@ -75,43 +82,40 @@ class Word(str):
         self.txt = txt
         self._parent = None
         self.code = None
-        self.raw_matches = set()
+        self.originals = set()
         self.matches = set()
-        self.find_matches(table={})
 
-    @staticmethod
-    def create(txt,parent):
-        word = Word(txt)
+    @classmethod
+    def new(cls,txt,parent):
+        word = cls(txt)
         word.setParent(parent)
-        print(word.parent)
+        word.find_matches()
         return word
 
     def setParent(self,parent):
         self._parent = parent
 
     def reverse_lookup(self,*args):
-        self.parent().reverse_lookup(*args)
+        self.parent.reverse_lookup(*args)
 
+    @property
     def parent(self):
-
         return self._parent
 
     def table(self):
-        if not self.parent():
-            return self.parent().table.copy()
-        return {}
+        return self.parent.table.copy()
 
-    def find_matches(self,table=None):
-        self.gen_code(table=table)
-        if table is None:
+    def find_matches(self):
+        self.gen_code()
+        if self.originals:
             self.matches.clear()
-            for word in self.explore_words(self.raw_matches):
+            for word in self.explore_words(self.originals):
                 self.matches.add(word)
         else:
             word_set = all_words()
             for word in self.explore_words(word_set):
-                self.raw_matches.add(word)
-            self.matches = self.raw_matches
+                self.originals.add(word)
+                self.matches.add(word)
         return len(self.matches)
 
     def explore_words(self,word_set):
@@ -119,9 +123,9 @@ class Word(str):
             if self.compare(word):
                 yield word
 
-    def gen_code(self,table=None):
+    def gen_code(self):
         start, self.code = 1, ""
-        if table is None: table = self.table()
+        table = self.table()
         for char in self.txt:
             if char == "'": self.code += "'"
             elif char not in table:
@@ -134,22 +138,22 @@ class Word(str):
     def compare(self,other):
         if len(self) != len(other): return False
         code, start = "", 1
-        table = {} if self.parent() is None else self.parent().table
+        table = self.table()
         for icode,char in zip(self.code,other):
             if icode.isalpha() :
                 if char != icode: return False
                 code += char
-            elif char == "'":
-                if icode != "'": return False
+            elif char in self.table().values(): return False
+            elif icode == "'" or char == "'":
+                if char != icode: return False
                 code += "'"
             elif char in table:
+                if other.count(char) <= 1: return False
                 code += table[char]
-            elif self.reverse_lookup(char,icode) is False:
-                return False
             else:
                 table[char] = str(start)
                 code += str(start)
                 start += 1
-        if code != self.code:
-            return False
-        return True
+        if code == self.code:
+            return True
+        return False
