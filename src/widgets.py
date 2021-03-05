@@ -14,6 +14,31 @@ from PyQt6.QtGui import QFont, QAction
 
 from src.phrase import Phrase
 
+ClassObject = None
+
+# Sample Style Sheet
+"""
+    {
+        background-color: #000000;
+        background-repeat: repeat-y;
+        background origin: content;
+        border: 1px solid #000000;
+        border-radius: 3px;
+        color: #9FF;
+        gridline-color: gray;  #QtableView Only
+        font-style: bold;
+        margin: 5px;
+        padding: 5px;
+        min-height: 100px;
+        max-width: 100px;
+        text-align: center;
+        opacity: 223;
+        selection-color: darkblue;
+        selection-background-color: white;
+    }
+"""
+
+
 
 class TableItem(QTableWidgetItem):
 
@@ -34,6 +59,7 @@ class TableItem(QTableWidgetItem):
         self.column = column
 
 class Table(QTableWidget):
+    styleSheet = "QTableWidget {background-color: white; gridline-color: #ddd; selection-color: #3bf}"
 
     def __init__(self,rows,columns,parent=None):
         super().__init__(rows,columns,parent=parent)
@@ -41,6 +67,7 @@ class Table(QTableWidget):
         self.setObjectName("table")
         self.setHorizontalHeaderLabels(["OLD","NEW"])
         self.showGrid()
+        self.setStyleSheet(self.styleSheet)
         self.setEditTriggers(QTableWidget.EditTriggers(0))
         headers = self.horizontalHeader()
         headers.setSectionResizeMode(0,QHeaderView.ResizeMode(1))
@@ -141,12 +168,14 @@ class FileMenu(QMenu):
         self.window().text_browser.clear()
 
 class WordList(QListWidget):
+    styleSheet = "QListWidget {background-color: white; selection-color: #17aee8; font-style: bold;}"
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
         self.setObjectName("Word_List")
         self._window = None
         self.currentItemChanged.connect(self.fill_matches)
+        self.setStyleSheet(self.styleSheet)
 
     def window(self):
         return self._window
@@ -193,11 +222,14 @@ class WordListItem(QListWidgetItem):
             return list(self.object.matches)
 
 class ChosenList(QListWidget):
+    styleSheet = "QListWidget {background-color: white; selection-color: #17aee8; font-style: bold;}"
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
         self.setObjectName("Chosen_List")
         self._window = None
+        self.internal = []
+        self.setStyleSheet(self.styleSheet)
 
     def window(self):
         return self._window
@@ -206,16 +238,20 @@ class ChosenList(QListWidget):
         self._window = window
 
     def add_item(self,match):
-        word = WordListItem(match,parent=self)
-        self.addItem(word)
+        if match not in self.internal:
+            word = WordListItem(match,parent=self)
+            self.internal.append(match)
+            self.addItem(word)
 
     def remove_word(self):
         for item in self.selectedItems():
+            self.internal.remove(item.text())
             row = self.indexFromItem(item).row()
             self.window().driver.undo_changes(item.text())
             self.takeItem(row)
 
     def remove_match(self,match):
+        self.internal.remove(match)
         for row in range(self.count()):
             if self.item(row).text() == match:
                 self.takeItem(row)
@@ -223,6 +259,7 @@ class ChosenList(QListWidget):
 
 
 class MatchesList(QListWidget):
+    styleSheet = "QListWidget {background-color: white; selection-color: #17aee8; font-style: bold;}"
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
@@ -317,7 +354,7 @@ class SolveButton(QPushButton):
         super().__init__(parent=parent)
         self._window = None
         self.setObjectName("solve")
-        self.setText("Solve")
+        self.setText("Auto Solve")
         self.pressed.connect(self.solve)
 
     def solve(self):
@@ -412,5 +449,3 @@ class TranslationLabel(QLabel):
 
     def setWindow(self,window):
         self._window = window
-
-# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

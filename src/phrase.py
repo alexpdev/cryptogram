@@ -3,14 +3,14 @@
 
 import json
 
-ALL_WORDS = json.load(open("data\\allWords.json"))
+ALL_WORDS = sorted(json.load(open("data\\allWords.json")),key=len)
 
 def all_words():
     return ALL_WORDS
 
 def sanatize(txt):
-    temp = "".join([i for i in txt if i not in ".?!,:;-\""])
-    return temp.replace("  "," ")
+    temp = "".join([i for i in txt if i.isalpha() or i in "' "]).replace("  "," ")
+    return temp
 
 class Phrase:
     def __init__(self,txt,table={}):
@@ -31,25 +31,19 @@ class Phrase:
         return temp_txt
 
     def split_words(self):
-        words = self.txt.split(" ")
-        phrase_object = self
-        for word in words:
-            obj = Word.new(word,phrase_object)
+        for word in self.txt.split(" "):
+            obj = Word.new(word,parent=self)
             self.words.append(obj)
-        return self.words
 
     def add_keys(self,old,new):
         changes = {}
         for k,v in zip(old,new):
-            if k not in self.table:
+            if k not in self.table and k.isalpha():
                 self.table[k] = v
                 changes[k] = v
         self.add_changes(old,new,changes)
         self.find_matches()
         return changes
-
-    def find_matches(self):
-        [word.find_matches() for word in self.words]
 
     def remove_keys(self,match):
         chars = self.changes[match][0]
@@ -65,69 +59,73 @@ class Phrase:
     def remove_changes(self,word):
         del self.changes[word]
 
-    def get_key(self,char):
-        for k,v in self.table.items():
-            if v == char:
-                return k
-        return
-
-    def reverse_lookup(self, query, target):
-        for key,value in self.table.items():
-            if value == query and key != target:
-                return False
+    def find_matches(self):
+        [word.find_matches() for word in self.words]
 
 class Word(str):
 
-    def __init__(self,txt):
-        self.txt = txt
-        self._parent = None
-        self.code = None
-        self.originals = set()
-        self.matches = set()
-
     @classmethod
-    def new(cls,txt,parent):
+    def new(cls,txt,parent=None):
         word = cls(txt)
         word.setParent(parent)
         word.find_matches()
         return word
 
-    def setParent(self,parent):
-        self._parent = parent
-
-    def reverse_lookup(self,*args):
-        self.parent.reverse_lookup(*args)
+    def __init__(self,txt):
+        self.txt = txt
+        self._parent = None
+        self.code = ""
+        self.originals = set()
+        self.matches = set()
+        self.gen_code()
 
     @property
     def parent(self):
         return self._parent
 
+    def setParent(self,parent):
+        self._parent = parent
+
     def table(self):
-        return self.parent.table.copy()
+        return self._parent.table
 
     def find_matches(self):
-        self.gen_code()
+        """
+            Find possible matches for the word and stores them in .matches attribute.
+
+            Returns:
+                [int]: [total matches]
+        """
         if self.originals:
-            self.matches.clear()
-            for word in self.explore_words(self.originals):
-                self.matches.add(word)
+            self.rescan_matches()
         else:
-            word_set = all_words()
-            for word in self.explore_words(word_set):
-                self.originals.add(word)
-                self.matches.add(word)
+            self.get_matches()
         return len(self.matches)
 
-    def explore_words(self,word_set):
-        for word in word_set:
-            if self.compare(word):
-                yield word
+    def rescan_matches(self):
+        for other in self.originals:
+            if self.is_match(other):
+                self.matches.add(other)
+            elif other in self.matches:
+                self.matches.remove(other)
+
+    def get_matches(self):
+        for word in all_words():
+            if len(word) > len(self.txt): break
+            if len(word) == len(self.txt) and self.is_match(word):
+                self.originals.add(word)
+                self.matches.add(word)
 
     def gen_code(self):
-        start, self.code = 1, ""
-        table = self.table()
+        """
+        ### gen_code
+        - [generates a code for finding possible matches] \n\n
+        ### Returns:
+            [str]: [code generated from function]
+        """
+        start, table = 1, {}
         for char in self.txt:
-            if char == "'": self.code += "'"
+            if not char.isalpha(): self.code += char
             elif char not in table:
                 table[char] = str(start)
                 self.code += str(start)
@@ -135,25 +133,24 @@ class Word(str):
             else: self.code += table[char]
         return self.code
 
-    def compare(self,other):
-        if len(self) != len(other): return False
-        code, start = "", 1
-        table = self.table()
-        for icode,char in zip(self.code,other):
-            if icode.isalpha() :
-                if char != icode: return False
-                code += char
-            elif char in self.table().values(): return False
-            elif icode == "'" or char == "'":
-                if char != icode: return False
-                code += "'"
-            elif char in table:
-                if other.count(char) <= 1: return False
-                code += table[char]
+    def is_match(self,other):
+        start, code, temp = 1, "", {}
+        for i,char in enumerate(other):
+            if not self.is_qualified(i,char): return False
+            if char == "'": code += char
+            elif char in temp: code += temp[char]
             else:
-                table[char] = str(start)
+                temp[char] = str(start)
                 code += str(start)
                 start += 1
-        if code == self.code:
-            return True
-        return False
+        return True if code == self.code else False
+
+    def is_qualified(self,i,new):
+        table, old = self.table(), self.txt[i]
+        if old == "'" or new == "'":
+            return True if old == new else False
+        elif old in table:
+            return True if table[old] == new else False
+        elif new in table.values():
+            return False
+        return True

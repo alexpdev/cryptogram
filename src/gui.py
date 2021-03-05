@@ -4,12 +4,14 @@
 from src.widgets import (UpperComboBox, WordList, MatchesList,
                         FileMenu, SubmitPhraseButton, SubmitCharButton,
                         ChosenList, RemoveWordButton, RemoveCharButton,
-                        Table, SolveButton, AutoCheck)
+                        Table, SolveButton, MatchesLabel)
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QMenuBar,
                             QVBoxLayout, QHBoxLayout, QGridLayout,
                             QLineEdit, QTextBrowser, QStatusBar)
 
 class Window(QMainWindow):
+    styleSheet = "QMainWindow {background-color: #ddd;}"
+
     def __init__(self,app,parent=None):
         super().__init__(parent=parent)
         self.app = app
@@ -45,12 +47,12 @@ class Window(QMainWindow):
         self.chosen_list = ChosenList(self.central)
         self.remove_word = RemoveWordButton(self.central)
         self.solve_button = SolveButton(self.central)
-        self.auto_check = AutoCheck(self.central)
         self.word_list = WordList(self.central)
         self.matches_list = MatchesList(self.central)
         self.text_browser = QTextBrowser(self.central)
         self.old_combo = UpperComboBox(self.central)
         self.new_combo = UpperComboBox(self.central)
+        self.matches_label = MatchesLabel(self.central)
         self.menubar = QMenuBar(self)
         self.statusbar = QStatusBar(self)
         self.file_menu = FileMenu(self.menubar)
@@ -66,6 +68,7 @@ class Window(QMainWindow):
         self.setMenuBar(self.menubar)
         self.menubar.addMenu(self.file_menu)
         self.menubar.setVisible(True)
+        self.setStyleSheet(self.styleSheet)
 
         self.central.setLayout(self.central_layout)
         self.horiz_layout_1.addWidget(self.submit_phrase)
@@ -74,7 +77,7 @@ class Window(QMainWindow):
         self.vert_layout_1.addWidget(self.remove_word)
         self.vert_layout_2.addWidget(self.solve_button)
         self.vert_layout_2.addWidget(self.word_list)
-        self.vert_layout_3.addWidget(self.auto_check)
+        self.vert_layout_3.addWidget(self.matches_label)
         self.vert_layout_3.addWidget(self.matches_list)
         self.grid_layout_2.addWidget(self.table,1,0,1,2)
         self.grid_layout_2.addWidget(self.old_combo,2,0,1,1)
@@ -91,15 +94,13 @@ class Window(QMainWindow):
 
         self.custom_widgets = [self.table, self.submit_phrase, self.submit_char,
                             self.remove_char, self.chosen_list, self.remove_word,
-                            self.solve_button, self.auto_check, self.word_list,
-                            self.matches_list, self.old_combo, self.new_combo,
-                            self.file_menu]
+                            self.solve_button, self.word_list, self.matches_list,
+                            self.old_combo, self.new_combo, self.file_menu]
 
     def re_update(self):
         widgets = [self.table,self.chosen_list,self.word_list,self.matches_list,self.text_browser, self.line_edit]
         for widget in widgets:
             widget.repaint()
-
 
     def assign_window(self):
         for widget in self.custom_widgets:

@@ -25,33 +25,14 @@
 ##
 #############################################################################
 
-import json
 import time
 from pathlib import Path
-from cryptogram.phraseMap import PhraseMap
 
 WORDS = Path(__file__).resolve().parent / "data" / "allWords.json"
 STOP_SIG = False
 
-def stop_decryption():
-    global STOP_SIG
-    STOP_SIG = True
-    return
-
-def start_decryption(phrase,key,window):
-    global STOP_SIG
-    STOP_SIG = False
-    words = json.load(open(WORDS))
-    phrase = sanatize(phrase)
-    pm = PhraseMap(phrase,key,window)
-    wordset = set(words)
-    matches = pm.filter_words(wordset)
-    discover(matches,pm,window)
-
 def discover(matches,pm,window):
     if matches:
-        if check_end(): return
-        window.add_guess(gen_phrase(pm))
         pairs,removed = filter_matches(pm,matches)
         for k in removed:
             del matches[k]
@@ -59,7 +40,6 @@ def discover(matches,pm,window):
             window.add_word(part,word)
             chars = pm.addKeys(part,word)
             discover(matches,pm,window)
-            if check_end(): return
             pm.removeKeys(chars)
             window.remove_word(part,word)
         matches.update(removed)
@@ -94,26 +74,3 @@ def find_pairs(pm,word,partials):
         elif pm.isMatch(word,partial):
             lex[partial] = [(partial,word)]
     return lex
-
-def sanatize(txt):
-    clean_txt = ""
-    for char in txt:
-        if char.isalpha():
-            clean_txt += char.upper()
-        elif char in ["'"," "]:
-            clean_txt += char
-    return clean_txt
-
-def gen_phrase(pm):
-    p = ""
-    for i in pm.phrase:
-        if i.isalpha() and i in pm.key:
-            p += pm.key[i]
-        else:
-            p += i
-    return p
-
-def check_end():
-    if STOP_SIG == True:
-        time.sleep(.5)
-        return True
