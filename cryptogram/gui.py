@@ -1,22 +1,27 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from src.widgets import (UpperComboBox, WordList, MatchesList,
+from cryptogram.widgets import (UpperComboBox, WordList, MatchesList,
                         FileMenu, SubmitPhraseButton, SubmitCharButton,
                         ChosenList, RemoveWordButton, RemoveCharButton,
-                        Table, SolveButton, MatchesLabel)
+                        Table, SolveButton, MatchesLabel, HelpMenu)
+
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QMenuBar,
                             QVBoxLayout, QHBoxLayout, QGridLayout,
                             QLineEdit, QTextBrowser, QStatusBar)
 
+from PyQt6.QtGui import QIcon
+
 class Window(QMainWindow):
-    styleSheet = "QMainWindow {background-color: #ddd;}"
+    styleSheet = "QMainWindow {background-color: #737373;}"
 
     def __init__(self,app,parent=None):
         super().__init__(parent=parent)
         self.app = app
         self._phrase = None
         self._driver = None
+        self.setWindowTitle("Cryptogram")
+        self.setWindowIcon(QIcon("img/crypto.png"))
         self.setObjectName("Window")
         self.resize(900,800)
         self.setup_ui()
@@ -56,6 +61,7 @@ class Window(QMainWindow):
         self.menubar = QMenuBar(self)
         self.statusbar = QStatusBar(self)
         self.file_menu = FileMenu(self.menubar)
+        self.help_menu = HelpMenu(self.menubar)
 
         self.central.setObjectName("central")
         self.line_edit.setObjectName("line_edit")
@@ -67,6 +73,7 @@ class Window(QMainWindow):
         self.setStatusBar(self.statusbar)
         self.setMenuBar(self.menubar)
         self.menubar.addMenu(self.file_menu)
+        self.menubar.addMenu(self.help_menu)
         self.menubar.setVisible(True)
         self.setStyleSheet(self.styleSheet)
 
@@ -95,7 +102,7 @@ class Window(QMainWindow):
         self.custom_widgets = [self.table, self.submit_phrase, self.submit_char,
                             self.remove_char, self.chosen_list, self.remove_word,
                             self.solve_button, self.word_list, self.matches_list,
-                            self.old_combo, self.new_combo, self.file_menu]
+                            self.old_combo, self.new_combo, self.file_menu, self.help_menu]
 
     def re_update(self):
         widgets = [self.table,self.chosen_list,self.word_list,self.matches_list,self.text_browser, self.line_edit]

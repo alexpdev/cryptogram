@@ -5,8 +5,8 @@ import os,sys
 from unittest import TestCase
 from PyQt6.QtWidgets import QApplication
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.gui import Window
-from src.driver import Driver
+from cryptogram.gui import Window
+from cryptogram.driver import Driver
 
 class BasicWindowTest(TestCase):
 
@@ -47,7 +47,6 @@ class WindowTest(TestCase):
                     self.window.remove_char,
                     self.window.remove_word,
                     self.window.solve_button,
-                    self.window.auto_check,
                     self.window.text_browser,
                     self.window.old_combo,
                     self.window.new_combo,
@@ -55,33 +54,6 @@ class WindowTest(TestCase):
                     self.window.statusbar,
                     self.window.file_menu)
         for widget in widgets:
-            if widget:
-                print(widget)
-            else:
-                print("False", widget)
             self.assertTrue(widget)
             if widget in self.window.custom_widgets:
                 self.assertEqual(widget.window(),self.window)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

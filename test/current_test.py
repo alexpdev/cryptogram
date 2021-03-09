@@ -5,9 +5,9 @@ import os,sys
 from unittest import TestCase
 from PyQt6.QtWidgets import QApplication
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.gui import Window
-from src.driver import Driver
-from src.phrase import Phrase,sanatize
+from cryptogram.gui import Window
+from cryptogram.driver import Driver
+from cryptogram.phrase import Phrase,sanatize
 
 
 class WindowTest(TestCase):

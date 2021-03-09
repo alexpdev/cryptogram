@@ -1,8 +1,6 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import sys
-
 import string
 
 from PyQt6.QtWidgets import (QComboBox, QLabel, QListWidgetItem,
@@ -12,11 +10,9 @@ from PyQt6.QtWidgets import (QComboBox, QLabel, QListWidgetItem,
 
 from PyQt6.QtGui import QFont, QAction
 
-from src.phrase import Phrase
+from cryptogram.phrase import Phrase
 
-ClassObject = None
-
-# Sample Style Sheet
+# Sample QSS Style Sheet
 """
     {
         background-color: #000000;
@@ -24,7 +20,7 @@ ClassObject = None
         background origin: content;
         border: 1px solid #000000;
         border-radius: 3px;
-        color: #9FF;
+        color: #000000;
         gridline-color: gray;  #QtableView Only
         font-style: bold;
         margin: 5px;
@@ -38,9 +34,13 @@ ClassObject = None
     }
 """
 
-
-
 class TableItem(QTableWidgetItem):
+    """
+    TableItem [widgets that fill in the tablewidgets]
+
+    Args:
+        QTableWidgetItem ([int]type=0): [int enum represening item type. default=0]
+    """
 
     def __init__(self,type=0):
         super().__init__(type=type)
@@ -49,17 +49,36 @@ class TableItem(QTableWidgetItem):
         self._window = None
 
     def window(self):
+        """ getter method for MainWindow """
         return self._window
 
     def setWindow(self,window):
+        """ setter method for MainWindow """
         self._window = window
 
     def assign_location(self,row,column):
+        """ setter for internal reference to row and column indeces """
         self.row = row
         self.column = column
 
 class Table(QTableWidget):
-    styleSheet = "QTableWidget {background-color: white; gridline-color: #ddd; selection-color: #3bf}"
+    """
+    ## Table:
+        Table Widget to represent Phrase.table attribute graphically
+
+    ## Args:
+        QTableWidget (int row, int col, obj parent=None):
+    """
+
+    styleSheet = """
+        QTableWidget {
+            background-color: white;
+            alternate-background-color: #850;
+            gridline-color: #ddd;
+            selection-color: #600;
+            border: 3px solid #743;
+            selection-background-color: #8cd;
+        }"""
 
     def __init__(self,rows,columns,parent=None):
         super().__init__(rows,columns,parent=parent)
@@ -76,12 +95,15 @@ class Table(QTableWidget):
         self.itemSelectionChanged.connect(self.select_row)
 
     def window(self):
+        """ getter method for MainWindow """
         return self._window
 
     def setWindow(self,window):
+        """ getter method for MainWindow """
         self._window = window
 
     def get_contents(self):
+        """ collect all value pairs in the table to use as phrase.table """
         chars = {}
         for num in range(self.rowCount()):
             old = self.item(num,0).text()
@@ -90,22 +112,27 @@ class Table(QTableWidget):
         return chars
 
     def select_row(self):
+        """ re-select row to update screen after rematching phrase words """
         row = self.currentRow()
         self.selectRow(row)
 
     def remove_row(self,row):
+        """ remove the items in the row at index row """
         self.removeRow(row)
 
     def remove_keys(self,chars):
+        """ Iterates through rows removing those that are in arguement `cars` """
         for num in list(range(0,self.rowCount()))[::-1]:
             if self.item(num,0).text() in chars:
                 self.remove_row(num)
 
     def add_changes(self,changes):
+        """ Add charachtes in dictionary `changes` to table. """
         for k,v in changes.items():
             self.add_chars(k,v)
 
     def add_chars(self,old,new):
+        """ receives a current word in phrase(old) and a match(new) and adds their characters """
         row_num = self.rowCount()
         self.insertRow(row_num)
         for i,text in enumerate((old,new)):
@@ -117,11 +144,11 @@ class UpperComboBox(QComboBox):
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
-        self._window = None
         self.setObjectName("Upper_Combo_Box")
         self.addItems([i for i in string.ascii_uppercase])
         self.setEditable(False)
         self.setFont(BoldFont())
+        self._window = None
 
     def window(self):
         return self._window
@@ -134,6 +161,27 @@ class BoldFont(QFont):
     def __init__(self):
         super().__init__()
         self.setBold(True)
+
+
+class HelpMenu(QMenu):
+
+    def __init__(self,parent=None):
+        super().__init__(parent=parent)
+        self._window = None
+        self.setTitle("Help")
+        about_action = QAction(parent=self)
+        about_action.setText("About")
+        self.addAction(about_action)
+        about_action.triggered.connect(self.about_show)
+
+    def window(self):
+        return self._window
+
+    def setWindow(self,window):
+        self._window = window
+
+    def about_show(self):
+        self.window().app.aboutQt()
 
 
 class FileMenu(QMenu):
@@ -159,23 +207,35 @@ class FileMenu(QMenu):
         self._window = window
 
     def destroy(self):
-        sys.exit(self.parent.parent().app.exec)
+        self.window().app.closeAllWindows()
 
     def clear(self):
         self.window().table.clear()
+        self.window().chosen_list.clear()
         self.window().word_list.clear()
         self.window().matches_list.clear()
         self.window().text_browser.clear()
 
 class WordList(QListWidget):
-    styleSheet = "QListWidget {background-color: white; selection-color: #17aee8; font-style: bold;}"
+    styleSheet = """
+        QListWidget {
+            background-color: white;
+            alternate-background-color: #a83;
+            selection-color: #680406;
+            border: 3px solid #743;
+            selection-background-color: #8cd;
+            font-style: bold;
+        }
+        QListView::item {
+            border: 2px solid black;
+        }"""
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
-        self.setObjectName("Word_List")
         self._window = None
-        self.currentItemChanged.connect(self.fill_matches)
         self.setStyleSheet(self.styleSheet)
+        self.setObjectName("Word_List")
+        self.currentItemChanged.connect(self.fill_matches)
 
     def window(self):
         return self._window
@@ -200,10 +260,10 @@ class WordListItem(QListWidgetItem):
 
     def __init__(self,obj,parent=None):
         super().__init__(parent=parent)
-        self._word = None
-        self.obj = obj
         self.setText(str(obj))
+        self._word = None
         self._window = None
+        self.obj = obj
 
     def setWord(self,word):
         self._word = word
@@ -222,14 +282,25 @@ class WordListItem(QListWidgetItem):
             return list(self.object.matches)
 
 class ChosenList(QListWidget):
-    styleSheet = "QListWidget {background-color: white; selection-color: #17aee8; font-style: bold;}"
+    styleSheet = """
+    QListWidget {
+        background-color: white;
+        alternate-background-color: #a83;
+        selection-color: #600;
+        border: 1px solid #743;
+        selection-background-color: #8cd;
+        font-style: bold;
+    }
+    QListView::item {
+        border: 1px solid black;
+    }"""
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
         self.setObjectName("Chosen_List")
+        self.setStyleSheet(self.styleSheet)
         self._window = None
         self.internal = []
-        self.setStyleSheet(self.styleSheet)
 
     def window(self):
         return self._window
@@ -245,34 +316,43 @@ class ChosenList(QListWidget):
 
     def remove_word(self):
         for item in self.selectedItems():
-            self.internal.remove(item.text())
-            row = self.indexFromItem(item).row()
             self.window().driver.undo_changes(item.text())
-            self.takeItem(row)
 
     def remove_match(self,match):
         self.internal.remove(match)
         for row in range(self.count()):
-            if self.item(row).text() == match:
+            item = self.item(row)
+            if not item or item.text() == match:
                 self.takeItem(row)
-                self.window().driver.undo_changes(match)
+            # print(match, self.item(row),row,self.internal)
 
 
 class MatchesList(QListWidget):
-    styleSheet = "QListWidget {background-color: white; selection-color: #17aee8; font-style: bold;}"
+    styleSheet = """QListWidget {
+            background-color: white;
+            selection-color: #600;
+            border: 3px solid #743;
+            alternate-background-color: #a83;
+            selection-background-color: #8cd;
+            font-style: bold;
+        }
+        QListView::item {
+            border: 2px solid black;
+        }"""
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
         self.setObjectName("Matches_List")
-        self._window = None
+        self.setStyleSheet(self.styleSheet)
         self.doubleClicked.connect(self.match_selected)
+        self._window = None
 
     def match_selected(self):
         match = self.currentItem()
         word = self.window().word_list.currentItem()
         self.window().driver.match_selected(word.text(),match.text())
-        self.window().driver.decrypt()
         self.window().word_list.fill_matches()
+        self.window().driver.decrypt()
 
     def window(self):
         return self._window
@@ -287,12 +367,19 @@ class MatchesList(QListWidget):
 
 
 class SubmitPhraseButton(QPushButton):
+    styleSheet = """
+        QPushButton {
+            color: #ffe8c6;
+            background-color: #283544;
+        }
+    """
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
         self._window = None
         self.setObjectName("submit_phrase")
         self.setText("Submit Phrase")
+        self.setStyleSheet(self.styleSheet)
         self.pressed.connect(self.submit)
 
     def window(self):
@@ -310,12 +397,19 @@ class SubmitPhraseButton(QPushButton):
         wordlist.add_items(phrase.words)
 
 class RemoveCharButton(QPushButton):
+    styleSheet = """
+        QPushButton {
+            color: #ffe8c6;
+            background-color: #283544;
+        }
+    """
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
         self._window = None
         self.setObjectName("remove_char")
         self.setText("Remove Row")
+        self.setStyleSheet(self.styleSheet)
         self.pressed.connect(self.remove)
 
     def window(self):
@@ -330,12 +424,19 @@ class RemoveCharButton(QPushButton):
         self.window().driver.decrypt()
 
 class RemoveWordButton(QPushButton):
+    styleSheet = """
+        QPushButton {
+            color: #ffe8c6;
+            background-color: #283544;
+        }
+    """
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
         self._window = None
         self.setObjectName("remove_word")
         self.setText("Remove Word")
+        self.setStyleSheet(self.styleSheet)
         self.pressed.connect(self.remove_selected)
 
     def window(self):
@@ -349,17 +450,24 @@ class RemoveWordButton(QPushButton):
         self.window().driver.decrypt()
 
 class SolveButton(QPushButton):
+    styleSheet = """
+        QPushButton {
+            color: #ffe8c6;
+            background-color: #283544;
+        }
+    """
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
         self._window = None
         self.setObjectName("solve")
         self.setText("Auto Solve")
+        self.setStyleSheet(self.styleSheet)
         self.pressed.connect(self.solve)
 
     def solve(self):
         table = self.window().table.get_contents()
-        self.window().driver.solve(table)
+        self.window().driver.auto_solve(table)
 
     def window(self):
         return self._window
@@ -368,12 +476,18 @@ class SolveButton(QPushButton):
         self._window = window
 
 class SubmitCharButton(QPushButton):
+    styleSheet = """
+        QPushButton {
+            color: #ffe8c6;
+            background-color: #283544;
+    }"""
 
     def __init__(self,parent=None):
         super().__init__(parent=parent)
         self._window = None
         self.setObjectName("submit_char")
         self.setText("Add Row")
+        self.setStyleSheet(self.styleSheet)
         self.pressed.connect(self.submit)
 
     def window(self):
