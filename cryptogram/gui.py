@@ -108,6 +108,7 @@ class Window(QMainWindow):
         widgets = [self.table,self.chosen_list,self.word_list,self.matches_list,self.text_browser, self.line_edit]
         for widget in widgets:
             widget.repaint()
+        self.update()
 
     def assign_window(self):
         for widget in self.custom_widgets:
@@ -119,7 +120,3 @@ class Window(QMainWindow):
 
     def setDriver(self,driver):
         self._driver = driver
-
-    def re_update(self):
-        self.update()
-        self.repaint()
