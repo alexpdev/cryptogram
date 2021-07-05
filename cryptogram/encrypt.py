@@ -1,9 +1,34 @@
+#! /usr/bin/python3
+# ~*~ charset: utf8 ~*~
+
+#############################################################################
+## Copyright (C) 2020 ASPDEV.
+##
+## Cryptogram v0.1.1
+## All rights reserved.
+##
+## You may use this file under the terms of the GNU AGPLv3 license:
+##
+## THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+## "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+## LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+## A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+## OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+## SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+## LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+## DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+## THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+## OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+##
+#############################################################################
+
 import random
 import string
 
 def encrypt(phrase):
-    """encrypts string with randomly generated character
-    substitution cypher. returns encrypted text and key"""
+    """ encrypts string with randomly generated character
+    substitution cypher. returns encrypted text and key """
     alpha,cv,vc = [i for i in string.ascii_uppercase],{},{}
     txt = ""
     for char in phrase.upper():
@@ -61,6 +86,3 @@ def gen_cypher():
             r = False
         start += 1
     return dct
-
-# if __name__ == "__main__":
-#     phrase = "MOOSE ROOF FARTHER FIRE FIRST FOREMOST"
