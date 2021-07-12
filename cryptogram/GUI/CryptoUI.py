@@ -1,7 +1,7 @@
 import sys
 import os
 import json
-from PyQt5.QtWidgets import (QWidget,QGridLayout,QLabel,QComboBox,
+from PyQt6.QtWidgets import (QWidget,QGridLayout,QLabel,QComboBox,
                              QPushButton,QCheckBox,QLineEdit,
                              QMainWindow,QApplication,QTextBrowser,
                              )
