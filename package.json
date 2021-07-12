@@ -1,15 +1,4 @@
 {
-  "name": "cryptogram",
-  "version": "1.0.0",
-  "description": "",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/alexprange/cryptogram.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/alexprange/cryptogram/issues"
-  },
-  "homepage": "https://github.com/alexprange/cryptogram#readme"
+  "name": "cryptogram-gui",
+  "version": "1.0.0"
 }
