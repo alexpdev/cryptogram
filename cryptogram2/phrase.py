@@ -2,17 +2,49 @@ import os
 import json
 
 def get_wordset():
-    path = os.papth.join(os.getcwd(), "data", "WordData.json")
+    path = os.papth.join(os.getcwd(), "data", "allWords.json")
     data = json.load(open(path))
-    wordset = set([key for key,value in data.items()])
+    wordset = sorted(set(data), key=len)
     return wordset
 
-class Word:
-    def __init__(self, word, word_map=None, matches=None, parent=None):
+class Data:
+    wordset = get_wordset()
+
+class Phrase:
+
+    wordset = Data.wordset
+
+    def __init__(self,phrase,key=None):
+        self.phrase = phrase
+        self.key = key
+        self.children = []
+        self.selected_words = []
+
+    def gen_words(self):
+        for word in self.phrase:
+            word_map = self.get_int_map(word)
+            child = Word(word, word_map, parent=self)
+            self.children.append(child)
+
+
+    def get_int_map(self, word):
+        mapping, translation, counter = {}, [], 1
+        for item in word:
+            if item in mapping:
+                translation.append(mapping[item])
+            else:
+                mapping[item] = counter
+                counter += 1
+        return mapping
+
+
+class Word(Phrase):
+
+    def __init__(self, word, word_map, parent=None):
         self.parent = parent
         self.word = word
         self.word_map = word_map
-        self.matches = matches
+        self.matches = []
         self.used_words = []
 
     @property
@@ -49,24 +81,6 @@ class Word:
         if char in self.key.values():
             return False
 
-
-class Phrase:
-
-    wordset = get_wordset()
-    wordset_mappings = {}
-
-    def __init__(self,phrase,key=None):
-        self.phrase = phrase
-        self.key = key
-        self.children = []
-
-    def translate_words(self):
-        for word in self.phrase:
-            word_map = self.get_int_map(word)
-            matches = self.filter_wordset(word_map)
-            child = Word(word,word_map=word_map,matches=matches,parent=self)
-            self.children.append(child)
-
     def filter_wordset(self, word_map):
         for string in self.wordset:
             if len(string) == len(word_map):
@@ -77,13 +91,3 @@ class Phrase:
                     string_word_map = self.worddata_mappings[string]
                 if string_word_map == word_map:
                     yield string
-
-    def get_int_map(self, word):
-        mapping, translation, counter = {}, [], 1
-        for item in word:
-            if item in mapping:
-                translation.append(mapping[item])
-            else:
-                mapping[item] = counter
-                counter += 1
-        return mapping
