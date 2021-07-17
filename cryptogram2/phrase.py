@@ -2,7 +2,7 @@ import os
 import json
 
 def get_wordset():
-    path = os.papth.join(os.getcwd(), "data", "allWords.json")
+    path = os.path.join(os.getcwd(), "data", "allWords.json")
     data = json.load(open(path))
     wordset = sorted(set(data), key=len)
     return wordset
@@ -44,7 +44,6 @@ class Word(Phrase):
         self.parent = parent
         self.word = word
         self.word_map = word_map
-        self.matches = []
         self.used_words = []
 
     @property
