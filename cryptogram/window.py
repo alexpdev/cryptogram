@@ -1,7 +1,5 @@
 import os
-import sys
 import json
-import string
 
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
@@ -20,7 +18,15 @@ class Window(QMainWindow):
         self.layout = QVBoxLayout()
         self.central.setLayout(self.layout)
         self.setCentralWidget(self.central)
-        self.phraseinput = QLineEdit(parent=self)
+        self.phraselabel = Label("Phrase", parent=self)
+        self.phraseinput = InputEdit(parent=self)
+        self.button = QPushButton("Submit", parent=self)
+        self.listwidget = QListWidget(parent=self)
+        self.list2widget = QListWidget(parent=self)
+        self.button3 = QPushButton("Clear", parent=self)
+        self.button4 = QPushButton("Select", parent=self)
+        self.resultlabel = Label("Result", self)
+        self.resultedit1 = LineEdit(parent=self)
         self.hlayout1 = QHBoxLayout()
         self.hlayout2 = QHBoxLayout()
         self.hlayout3 = QHBoxLayout()
@@ -28,35 +34,24 @@ class Window(QMainWindow):
         self.vlayout2 = QVBoxLayout()
         self.vlayout3 = QVBoxLayout()
         self.vlayout4 = QVBoxLayout()
-        self.phraselabel = QLabel(parent=self)
-        self.phraselabel.setText("Phrase")
         self.hlayout1.addWidget(self.phraselabel)
         self.hlayout1.addWidget(self.phraseinput)
-        self.listwidget = QListWidget(parent=self)
-        self.list2widget = QListWidget(parent=self)
-        self.button = QPushButton(parent=self)
-        self.button.setText("Submit")
-        self.button2 = QPushButton(parent=self)
-        self.button2.setText("Select")
-        self.button3 = QPushButton(parent=self)
-        self.button3.setText("Unselect")
-        self.button4 = QPushButton(parent=self)
-        self.button4.setText("Select")
-        self.button.pressed.connect(self.solve)
-        self.button2.pressed.connect(self.findmatch)
-        self.button3.pressed.connect(self.unselect)
-        self.button4.pressed.connect(self.setChosen)
+        self.hlayout1.addWidget(self.button)
+        self.vlayout3.addWidget(self.resultlabel)
+        self.vlayout3.addWidget(self.resultedit1)
         self.vlayout2.addWidget(self.list2widget)
         self.vlayout2.addWidget(self.button4)
         self.vlayout1.addWidget(self.listwidget)
-        self.vlayout1.addWidget(self.button2)
         self.vlayout1.addWidget(self.button3)
         self.hlayout2.addLayout(self.vlayout1)
         self.hlayout2.addLayout(self.vlayout2)
-        self.hlayout3.addWidget(self.button)
         self.layout.addLayout(self.hlayout1)
         self.layout.addLayout(self.hlayout2)
         self.layout.addLayout(self.hlayout3)
+        self.layout.addLayout(self.vlayout3)
+        self.button.pressed.connect(self.solve)
+        self.button3.pressed.connect(self.unselect)
+        self.button4.pressed.connect(self.setChosen)
         self.listwidget.currentItemChanged.connect(self.switchcurrent)
 
     def switchcurrent(self):
@@ -85,6 +80,8 @@ class Window(QMainWindow):
         print("setting chosen")
         item1 = self.listwidget.currentItem()
         item2 = self.list2widget.currentItem()
+        if not item1 or not item2:
+            return
         nums = item1.word
         string = item2.text()
         print(nums, string)
@@ -96,8 +93,8 @@ class Window(QMainWindow):
             else:
                 self.mapping[x] = y
                 self.rev[y] = x
+        self.reresult()
         print(self.mapping, self.rev)
-
 
     def unselect(self):
         print("unselecting")
@@ -112,32 +109,42 @@ class Window(QMainWindow):
         for char in chars:
             if char in self.rev:
                 del self.rev[char]
+        self.reresult()
         print(self.mapping, self.rev)
-
-    def findmatch(self):
-        item = self.listwidget.currentItem()
-        print(item)
-
 
     def solve(self):
         inp = self.phraseinput.text()
-        strwords = inp.split(" ")
-        phrase = []
-        numword = []
-        for word in strwords:
-            nums = word.split(",")
-            for num in nums:
-                if num.isnumeric():
-                    numword.append(int(num))
-                else:
-                    numword.append(num)
-            phrase.append(numword)
-            numword = []
-        for numword in phrase:
+        if inp[0].isalpha():
+            words = inp.split(" ")
+        elif inp[0].isdigit():
+            split1, split2 = "  ", " "
+            if inp.count(",") > 5:
+                split1, split2 = " ", ","
+            groups = inp.split(split1)
+            words = []
+            for group in groups:
+                nums = [int(i) if i.isnumeric() else i for i in group.split(split2)]
+                words.append(nums)
+        for word in words:
             n = ListItem(self.listwidget,0)
-            n.setText(str(numword))
-            n.setWord(numword)
+            n.setText(str(word))
+            n.setWord(word)
             self.listwidget.addItem(n)
+        self.reresult
+
+    def reresult(self):
+        self.resultedit1.clear()
+        string = ""
+        for i in range(self.listwidget.count()):
+            item = self.listwidget.item(i)
+            word = item.word
+            for char in word:
+                if char in self.mapping:
+                    string += self.mapping[char]
+                else:
+                    string += "_"
+            string += "  "
+        self.resultedit1.setText(string)
 
 
 
@@ -169,3 +176,46 @@ class Application(QApplication):
     def __init__(self, args):
         super().__init__(args)
         pass
+
+class InputEdit(QLineEdit):
+    """Line edit widget for input phrase."""
+
+    ssheet = """QLineEdit {color: black;}"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        font = self.font()
+        font.setPointSize(10)
+        self.setFont(font)
+        self.setStyleSheet(self.ssheet)
+
+
+class Label(QLabel):
+    """Label identifying the results so far."""
+
+    ssheet = """QLabel {color: #000;}"""
+
+    def __init__(self, text, parent=None):
+        super().__init__(text,parent)
+        self.setAlignment(Qt.Alignment.AlignCenter)
+        self.setStyleSheet(self.ssheet)
+        font = self.font()
+        font.setBold(True)
+        font.setPointSize(10)
+        self.setFont(font)
+
+
+class LineEdit(QLineEdit):
+    """Line edit widget for displaying results."""
+
+    ssheet = """QLineEdit {
+        background-color: #eee;
+        color: #000;
+        border: 1px solid #eeeeee;
+        border-bottom-color: #000;
+    }"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.setDisabled(True)
+        self.setStyleSheet(self.ssheet)
