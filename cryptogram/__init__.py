@@ -1,7 +1,8 @@
-
-
 import sys
-import os
-from .phrase import PHRASE
-from .window import Window
-from .main import main
+from .window import Application, Window
+
+def main():
+    app = Application(sys.argv)
+    window = Window()
+    window.show()
+    sys.exit(app.exec())
