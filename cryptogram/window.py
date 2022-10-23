@@ -8,18 +8,126 @@ Includes:
     Anogram Solver
     Word Permutations
 """
-
-
 import os
 import json
+from collections import Counter
 
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+import numpy as np
+import cv2 as cv
+from PIL import Image
+import pytesseract
 
 SRCDIR = os.path.dirname(os.path.abspath(__file__))
 DATADIR = os.path.join(os.path.dirname(SRCDIR), "data")
 ALLWORDS = json.load(open(os.path.join(DATADIR, "allWords.json"),"rt"))
+
+
+class CryptoImg:
+    def __init__(self, path=None):
+        self.path = path
+        self.img = cv.imread(path)
+        self.arr = self.convert_image()
+        self.rows = self.collect_rows()
+        self.word_counter = self.word_lengths()
+        self.process_img()
+
+    def convert_image(self):
+        arr = self.img.copy()
+        mask = self.arr < 255
+        arr[mask] = 0
+        return arr
+
+    def collect_rows(self):
+        rows = []
+        last = start = 0
+        for i in range(len(self.arr)):
+            if np.sum(self.arr[i]) != 255*len(self.arr[i]):
+                if last == 0:
+                    last = start = i
+                elif start + 1 != i:
+                    rows.append((last, start))
+                    last = start = i
+                else:
+                    start = i
+        rows.append((last, start))
+        return rows
+
+    def find_region(self, last):
+        section = self.arr[last]
+        indeces = np.where(section == 0)[0]
+        t = []
+        l = f = indeces[0]
+        for index in indeces[1:]:
+            if index == f + 1:
+                f = index
+            else:
+                t.append((l,f))
+                l = f = index
+        t.append((l,f))
+        return t
+
+
+    def word_lengths(self):
+        sizes = [start - last for last,start in self.rows]
+        shortest = min(sizes)
+        largest = max(sizes)
+        areas = {}
+        for last, start in self.rows:
+            if start - last == shortest:
+                areas[(last, start)] = self.find_region(last)
+        word_counter = []
+        gap = largest // 2
+        for key, value in areas.items():
+            char_counter = []
+            x1, x2 = key
+            gaps = [value[i][0] - value[i-1][1] for i in range(1, len(value))]
+            min_gap = min(gaps)
+            count, apostrophe = 1, False
+            for i in range(1, len(value)):
+                y1, y2 = value[i-1]
+                y3, y4 = value[i]
+                if y3-y2 == min_gap:
+                    count += 1
+                elif y3 - y2 > min_gap:
+                    upper = self.arr[x1-gap:x1-1, y2+1:y3-1]
+                    lower = self.arr[x2+1:x2+gap, y2+1:y3-1]
+                    if np.sum(upper) != 255 * upper.size:
+                        if np.sum(lower) == 255 * lower.size:
+                            apostrophe = True
+                        count += 2
+                    else:
+                        char_counter.append((count,apostrophe))
+                        count = 1
+                        apostrophe = False
+            char_counter.append((count, apostrophe))
+            word_counter.append(char_counter)
+        return word_counter
+
+    def process_image(self):
+        image = self.img
+        arr = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        lst = []
+        last = start = 0
+        for i in range(len(arr)):
+            if len(np.where(arr[i] < 255)[0]) > 0:
+                if not last or i - 1 != last:
+                    if last:
+                        lst.append([start, last])
+                    start = i
+                last = i
+        lines = []
+        for start, stop in lst:
+            img = Image.fromarray(arr[start-5:stop+5])
+            txt = pytesseract.image_to_string(img, lang="eng", config='-l eng --oem 1 --psm 7  -c preserve_interword_spaces=1 -c tessedit_char_whitelist="0123456789- "')
+            line = [i for i in txt.strip() if i.isdigit()]
+            if not line:
+                continue
+            line = txt.replace(" ", "|")
+            lines.append(line)
+        return lines
 
 class CryptoGram(QWidget):
     def __init__(self, parent=None):
@@ -29,15 +137,14 @@ class CryptoGram(QWidget):
         self.rev = {}
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        self.phraselabel = Label("Phrase", parent=self)
-        self.phraseinput = InputEdit(parent=self)
-        self.button = QPushButton("Submit", parent=self)
+        self.phraseinput = QPushButton("Enter Phrase Text",parent=self)
+        self.phraseimage = QPushButton("Select Phrase Image",parent=self)
         self.listwidget = QListWidget(parent=self)
         self.list2widget = QListWidget(parent=self)
         self.button3 = QPushButton("Clear", parent=self)
         self.button4 = QPushButton("Select", parent=self)
         self.resultlabel = Label("Result", self)
-        self.resultedit1 = LineEdit(parent=self)
+        self.resultedit1 = QTextBrowser(parent=self)
         self.hlayout1 = QHBoxLayout()
         self.hlayout2 = QHBoxLayout()
         self.hlayout3 = QHBoxLayout()
@@ -45,9 +152,8 @@ class CryptoGram(QWidget):
         self.vlayout2 = QVBoxLayout()
         self.vlayout3 = QVBoxLayout()
         self.vlayout4 = QVBoxLayout()
-        self.hlayout1.addWidget(self.phraselabel)
+        self.hlayout1.addWidget(self.phraseimage)
         self.hlayout1.addWidget(self.phraseinput)
-        self.hlayout1.addWidget(self.button)
         self.vlayout3.addWidget(self.resultlabel)
         self.vlayout3.addWidget(self.resultedit1)
         self.vlayout2.addWidget(self.list2widget)
@@ -60,11 +166,24 @@ class CryptoGram(QWidget):
         self.layout.addLayout(self.hlayout2)
         self.layout.addLayout(self.hlayout3)
         self.layout.addLayout(self.vlayout3)
-        self.button.pressed.connect(self.solve)
+        self.phraseimage.pressed.connect(self.select_phrase_file)
+        self.phraseinput.pressed.connect(self.input_phrase)
         self.button3.pressed.connect(self.unselect)
         self.button4.pressed.connect(self.setChosen)
         self.listwidget.currentItemChanged.connect(self.switchcurrent)
 
+    def input_phrase(self):
+        self.dialog = InputDialog(self)
+        self.dialog.inputAccepted.connect(self.solve)
+        self.dialog.exec()
+
+    def select_phrase_file(self):
+        path = QFileDialog.getOpenFileName(parent=self, caption="Image File")
+        if not path:
+            return
+        path = path[0]
+        self.cryptoimg = CryptoImg(path)
+       
     def switchcurrent(self):
         self.list2widget.clear()
         item = self.listwidget.currentItem()
@@ -123,8 +242,7 @@ class CryptoGram(QWidget):
         self.reresult()
         print(self.mapping, self.rev)
 
-    def solve(self):
-        inp = self.phraseinput.text()
+    def solve(self, inp):
         if inp[0].isalpha():
             words = inp.split(" ")
         elif inp[0].isdigit():
@@ -313,17 +431,29 @@ class Application(QApplication):
         super().__init__(args)
         pass
 
-class InputEdit(QLineEdit):
+class InputDialog(QDialog):
     """Line edit widget for input phrase."""
 
-    ssheet = """QLineEdit {color: black;}"""
+    inputAccepted = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        font = self.font()
-        font.setPointSize(10)
-        self.setFont(font)
-        self.setStyleSheet(self.ssheet)
+        self.editor = QPlainTextEdit(parent=self)
+        self.layout = QVBoxLayout(self)
+        self.hlayout = QHBoxLayout()
+        self.layout.addWidget(self.editor)
+        self.acceptbtn = QPushButton("Accept", parent=self)
+        self.cancelbtn = QPushButton("Cancel", parent=self)
+        self.hlayout.addWidget(self.acceptbtn)
+        self.hlayout.addWidget(self.cancelbtn)
+        self.layout.addLayout(self.hlayout)
+        self.acceptbtn.clicked.connect(self.accept_input)
+        self.cancelbtn.clicked.connect(self.close)
+
+    def accept_input(self):
+        text = self.editor.toPlainText()
+        self.inputAccepted.emit(text)
+        self.close()
 
 
 class Label(QLabel):
@@ -333,7 +463,7 @@ class Label(QLabel):
 
     def __init__(self, text, parent=None):
         super().__init__(text,parent)
-        self.setAlignment(Qt.Alignment.AlignCenter)
+        self.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.setStyleSheet(self.ssheet)
         font = self.font()
         font.setBold(True)
