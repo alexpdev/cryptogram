@@ -26,32 +26,49 @@ ALLWORDS = json.load(open(os.path.join(DATADIR, "allWords.json"),"rt"))
 
 
 class CryptoImg:
-    def __init__(self, path=None):
+    def __init__(self, path=None, parent=None):
+        self.parent = parent
         self.path = path
+        self.lines = []
+        self.line = []
+        self.word = []
         self.img = cv.imread(path)
         self.arr = self.convert_image()
+        self.show_image(self.arr)
         self.rows = self.collect_rows()
         self.word_counter = self.word_lengths()
-        self.process_img()
+
+    def show_image(self, arr):
+        label = QLabel()
+        image = Image.fromarray(arr)
+        im = image.convert("RGBA")
+        data = im.tobytes()
+        qim = QImage(data, im.size[0], im.size[1], QImage.Format_RGBA8888)
+        pixmap = QPixmap.fromImage(qim)
+        label.setPixmap(pixmap)
+        self.parent.scrolllayout.addWidget(label)
+        label.show()
 
     def convert_image(self):
-        arr = self.img.copy()
-        mask = self.arr < 255
+        arr = cv.cvtColor(self.img, cv.COLOR_BGR2GRAY)
+        mask = arr < 150
         arr[mask] = 0
+        arr[arr>150] = 255
         return arr
 
     def collect_rows(self):
         rows = []
         last = start = 0
         for i in range(len(self.arr)):
-            if np.sum(self.arr[i]) != 255*len(self.arr[i]):
+            row = self.arr[i]
+            if np.sum(row) != 255*len(row):
                 if last == 0:
                     last = start = i
-                elif start + 1 != i:
+                elif start + 1 == i:
+                    start = i
+                else:
                     rows.append((last, start))
                     last = start = i
-                else:
-                    start = i
         rows.append((last, start))
         return rows
 
@@ -89,45 +106,45 @@ class CryptoImg:
             for i in range(1, len(value)):
                 y1, y2 = value[i-1]
                 y3, y4 = value[i]
+                char1 = self.img[x2+10:x2+gap,y1:y2]
+                char2 = self.img[x2+10:x2+gap,y3:y4]
+                self.process_img(char1)
                 if y3-y2 == min_gap:
                     count += 1
                 elif y3 - y2 > min_gap:
                     upper = self.arr[x1-gap:x1-1, y2+1:y3-1]
                     lower = self.arr[x2+1:x2+gap, y2+1:y3-1]
+                    apostrophe2 = False
                     if np.sum(upper) != 255 * upper.size:
                         if np.sum(lower) == 255 * lower.size:
                             apostrophe = True
+                            apostrophe2 = True
                         count += 2
                     else:
                         char_counter.append((count,apostrophe))
                         count = 1
                         apostrophe = False
+                    self.process_img(lower, apostraphe=apostrophe2)
+            self.process_img(char2, newline=True)
             char_counter.append((count, apostrophe))
             word_counter.append(char_counter)
         return word_counter
 
-    def process_image(self):
-        image = self.img
-        arr = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-        lst = []
-        last = start = 0
-        for i in range(len(arr)):
-            if len(np.where(arr[i] < 255)[0]) > 0:
-                if not last or i - 1 != last:
-                    if last:
-                        lst.append([start, last])
-                    start = i
-                last = i
-        lines = []
-        for start, stop in lst:
-            img = Image.fromarray(arr[start-5:stop+5])
-            txt = pytesseract.image_to_string(img, lang="eng", config='-l eng --oem 1 --psm 7  -c preserve_interword_spaces=1 -c tessedit_char_whitelist="0123456789- "')
-            line = [i for i in txt.strip() if i.isdigit()]
-            if not line:
-                continue
-            line = txt.replace(" ", "|")
-            lines.append(line)
-        return lines
+    def process_img(self, arr, newline=False, apostraphe=False):
+        img = Image.fromarray(arr)
+        txt = pytesseract.image_to_string(img, lang="eng", config='-l eng --oem 1 --psm 6  -c preserve_interword_spaces=1 -c tessedit_char_whitelist="0123456789- "')
+        txt = txt.strip()
+        if txt.isdigit():
+            self.word.append(txt)
+        elif txt == '':
+            self.line.append(self.word)
+            self.word = []
+        if newline:
+            self.line.append(self.word)
+            self.lines.append(self.line)
+            self.line = []
+            self.word = []
+
 
 class CryptoGram(QWidget):
     def __init__(self, parent=None):
@@ -145,6 +162,12 @@ class CryptoGram(QWidget):
         self.button4 = QPushButton("Select", parent=self)
         self.resultlabel = Label("Result", self)
         self.resultedit1 = QTextBrowser(parent=self)
+        self.scrollarea = QScrollArea()
+        self.scrollwidget = QWidget()
+        self.scrolllayout = QVBoxLayout(self.scrollwidget)
+        self.scrollarea.setWidget(self.scrollwidget)
+        self.scrollarea.setWidgetResizable(True)
+        self.scrollarea.setBackgroundRole(QPalette.Dark)
         self.hlayout1 = QHBoxLayout()
         self.hlayout2 = QHBoxLayout()
         self.hlayout3 = QHBoxLayout()
@@ -166,6 +189,7 @@ class CryptoGram(QWidget):
         self.layout.addLayout(self.hlayout2)
         self.layout.addLayout(self.hlayout3)
         self.layout.addLayout(self.vlayout3)
+        self.layout.addWidget(self.scrollarea)
         self.phraseimage.pressed.connect(self.select_phrase_file)
         self.phraseinput.pressed.connect(self.input_phrase)
         self.button3.pressed.connect(self.unselect)
@@ -182,8 +206,16 @@ class CryptoGram(QWidget):
         if not path:
             return
         path = path[0]
-        self.cryptoimg = CryptoImg(path)
-       
+        self.cryptoimg = CryptoImg(path, self)
+        print(self.cryptoimg.lines)
+        inp = ""
+        for line in self.cryptoimg.lines:
+            for word in line:
+                inp += " ".join(word)
+                inp += "  "
+        self.solve(inp)
+
+
     def switchcurrent(self):
         self.list2widget.clear()
         item = self.listwidget.currentItem()
@@ -202,7 +234,7 @@ class CryptoGram(QWidget):
                             matches = False
                             break
                     if matches:
-                        listitem = QListWidgetItem(parent=self.list2widget)
+                        listitem = QListWidgetItem(type=0)
                         listitem.setText(string)
                         self.list2widget.addItem(listitem)
 
@@ -282,6 +314,7 @@ class Window(QMainWindow):
         super().__init__(parent=parent)
         self.layout = QVBoxLayout()
         self.central = TabWidget(parent=self)
+        self.resize(800,800)
         self.central.setLayout(self.layout)
         self.setCentralWidget(self.central)
         self.setWindowTitle("Daily Challenge Puzzle Solver")
