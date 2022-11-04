@@ -32,10 +32,14 @@ class CryptoImg:
         self.lines = []
         self.line = []
         self.word = []
+        # convert to an array
         self.img = cv.imread(path)
+        # convert array to all 0 and 255 value pixels
         self.arr = self.convert_image()
         self.show_image(self.arr)
+        # collect all rows that are not solid white_
         self.rows = self.collect_rows()
+
         self.word_counter = self.word_lengths()
 
     def show_image(self, arr):
@@ -45,7 +49,7 @@ class CryptoImg:
         data = im.tobytes()
         qim = QImage(data, im.size[0], im.size[1], QImage.Format_RGBA8888)
         pixmap = QPixmap.fromImage(qim)
-        label.setPixmap(pixmap)
+        label.setPixmap(pixmap.scaledToWidth(700))
         self.parent.scrolllayout.addWidget(label)
         label.show()
 
@@ -59,8 +63,11 @@ class CryptoImg:
     def collect_rows(self):
         rows = []
         last = start = 0
+        # iterate through array rows selecting the ones that have content
         for i in range(len(self.arr)):
             row = self.arr[i]
+            # last represents the row the content started on and start
+            # is where the content stops
             if np.sum(row) != 255*len(row):
                 if last == 0:
                     last = start = i
@@ -73,6 +80,7 @@ class CryptoImg:
         return rows
 
     def find_region(self, last):
+        """Create regions that have contigius black_ pixels."""
         section = self.arr[last]
         indeces = np.where(section == 0)[0]
         t = []
@@ -128,6 +136,11 @@ class CryptoImg:
             self.process_img(char2, newline=True)
             char_counter.append((count, apostrophe))
             word_counter.append(char_counter)
+        if self.word:
+            self.line.append(self.word)
+            self.lines.append(self.line)
+            self.line = []
+            self.word = []
         return word_counter
 
     def process_img(self, arr, newline=False, apostraphe=False):
@@ -207,7 +220,6 @@ class CryptoGram(QWidget):
             return
         path = path[0]
         self.cryptoimg = CryptoImg(path, self)
-        print(self.cryptoimg.lines)
         inp = ""
         for line in self.cryptoimg.lines:
             for word in line:
@@ -215,13 +227,11 @@ class CryptoGram(QWidget):
                 inp += "  "
         self.solve(inp)
 
-
     def switchcurrent(self):
         self.list2widget.clear()
         item = self.listwidget.currentItem()
         word = item.word
         serword = serialize(word)
-        print(word, type(word))
         for string in ALLWORDS:
             if len(string) == len(word):
                 if serialize(string) == serword:
@@ -239,15 +249,12 @@ class CryptoGram(QWidget):
                         self.list2widget.addItem(listitem)
 
     def setChosen(self):
-        print("setting chosen")
         item1 = self.listwidget.currentItem()
         item2 = self.list2widget.currentItem()
         if not item1 or not item2:
             return
         nums = item1.word
         string = item2.text()
-        print(nums, string)
-        print(self.mapping, self.rev)
         for x,y in zip(nums, string):
             if x == "'":
                 self.mapping["'"] = "'"
@@ -259,11 +266,9 @@ class CryptoGram(QWidget):
         print(self.mapping, self.rev)
 
     def unselect(self):
-        print("unselecting")
         item = self.listwidget.currentItem()
         data = item.word
         chars = []
-        print(self.mapping, self.rev)
         for i in data:
             if i in self.mapping:
                 chars.append(self.mapping[i])
@@ -272,7 +277,6 @@ class CryptoGram(QWidget):
             if char in self.rev:
                 del self.rev[char]
         self.reresult()
-        print(self.mapping, self.rev)
 
     def solve(self, inp):
         if inp[0].isalpha():
@@ -291,7 +295,7 @@ class CryptoGram(QWidget):
             n.setText(str(word))
             n.setWord(word)
             self.listwidget.addItem(n)
-        self.reresult
+        self.reresult()
 
     def reresult(self):
         self.resultedit1.clear()
