@@ -99,9 +99,14 @@ class CryptoImg:
         sizes = [start - last for last,start in self.rows]
         shortest = min(sizes)
         largest = max(sizes)
+        m = sizes.index(shortest)
+
         areas = {}
         for last, start in self.rows:
-            if start - last == shortest:
+            if last - start > shortest:
+                # if np.zeros(shape=(last-start+2,))  do something
+                pass
+            else:
                 areas[(last, start)] = self.find_region(last)
         word_counter = []
         gap = largest // 2
