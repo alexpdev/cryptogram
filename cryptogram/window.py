@@ -43,11 +43,11 @@ class CryptoImg:
         label = QLabel()
         image = Image.fromarray(arr)
         im = image.convert("RGBA")
+        im = im.resize(tuple(map(lambda x: int(x/5), arr.shape)))
         data = im.tobytes()
         qim = QImage(data, im.size[0], im.size[1], QImage.Format_RGBA8888)
         pixmap = QPixmap.fromImage(qim)
-        val = int(arr.shape[0]*.4)
-        label.setPixmap(pixmap.scaledToWidth(val))
+        label.setPixmap(pixmap)
         self.parent.scrolllayout.addWidget(label)
         label.show()
         QApplication.instance().processEvents()
@@ -110,6 +110,8 @@ class CryptoImg:
                     lower = self.arr[x2 + 1: x2 + gap, y2 + 1: y3 - 1]
                     self.process_img(lower)
             self.process_img(char2)
+            self.words.append(self.word)
+            self.word = []
         self.words.append(self.word)
 
     def process_img(self, arr):
@@ -140,7 +142,8 @@ class CryptoGram(QWidget):
         self.resultlabel = Label("Result", self)
         self.resultedit1 = QTextBrowser(parent=self)
         self.resultedit1.setFontPointSize(12.0)
-        self.resultedit1.setSizeAdjustPolicy(self.resultedit1.sizeAdjustPolicy().AdjustToContents)
+        self.resultedit1.t
+        self.resultedit1.setSizePolicy(self.resultedit1.sizePolicy().Policy.Maximum,self.resultedit1.sizePolicy().Policy.Maximum)
         self.scrollarea = QScrollArea()
         self.scrollwidget = QWidget()
         self.scrolllayout = QVBoxLayout(self.scrollwidget)
@@ -167,13 +170,12 @@ class CryptoGram(QWidget):
         self.layout.addLayout(self.hlayout1)
         self.layout.addLayout(self.hlayout2)
         self.layout.addLayout(self.hlayout3)
-        self.splitter = QSplitter(Qt.Vertical)
+        self.splitter = QHBoxLayout()
         self.editframe = QFrame()
         self.editframe.setLayout(self.vlayout3)
         self.splitter.addWidget(self.editframe)
         self.splitter.addWidget(self.scrollarea)
-        self.splitter.setStretchFactor(1,5)
-        self.layout.addWidget(self.splitter)
+        self.layout.addLayout(self.splitter)
         self.phraseimage.pressed.connect(self.select_phrase_file)
         self.phraseinput.pressed.connect(self.input_phrase)
         self.button3.pressed.connect(self.unselect)
@@ -279,7 +281,7 @@ class CryptoGram(QWidget):
                     string += self.mapping[char]
                 else:
                     string += "_"
-            string += " \n" if i and i % (count//5) == 0 else "  "
+            string += "  \n" if i and i % (count//5) == 0 else "  "
         self.resultedit1.setText(string)
 
 
@@ -291,7 +293,7 @@ class Window(QMainWindow):
         super().__init__(parent=parent)
         self.layout = QVBoxLayout()
         self.central = TabWidget(parent=self)
-        self.resize(800,800)
+        self.resize(600,600)
         self.central.setLayout(self.layout)
         self.statusbar = self.statusBar()
         self.setStatusBar(self.statusbar)
