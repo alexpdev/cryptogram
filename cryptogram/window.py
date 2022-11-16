@@ -38,8 +38,7 @@ class CryptoImg:
         self.arr = self.convert_image()
         self.show_image(self.arr)
         # collect all rows that are not solid white_
-        self.rows = self.collect_rows()
-
+        self.areas = self.get_contours()
         self.word_counter = self.word_lengths()
 
     def show_image(self, arr):
@@ -53,61 +52,44 @@ class CryptoImg:
         self.parent.scrolllayout.addWidget(label)
         label.show()
 
+    def get_contours(self):
+        contours, _ = cv.findContours(
+            self.arr, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
+        )
+        upper, under, left, right = -8, 8, -3, 80
+        sizes = {}
+        for contour in contours:
+            y, x = contour[0][0]
+            sub = self.arr[x + upper : x + under, y + left : y + right]
+            zed = np.where(sub==0)
+            l = len(set(zed[0]))
+            if l <= 4 and len(zed[1]) > 2:
+                pxls = sorted(set(zed[1]))
+                last = i = pxls[0]
+                for j in pxls[1:]:
+                    if j != i + 1:
+                        break
+                    i = j
+                sizes.setdefault((l,i - last), [])
+                sizes[(l,i-last)].append([x-l,x+l,y-2,y+i-last+2])
+        return max(list(sizes.values()), key=len)
+
     def convert_image(self):
-        arr = cv.cvtColor(self.img, cv.COLOR_BGR2GRAY)
-        mask = arr < 150
-        arr[mask] = 0
-        arr[arr>150] = 255
-        return arr
-
-    def collect_rows(self):
-        rows = []
-        last = start = 0
-        # iterate through array rows selecting the ones that have content
-        for i in range(len(self.arr)):
-            row = self.arr[i]
-            # last represents the row the content started on and start
-            # is where the content stops
-            if np.sum(row) != 255*len(row):
-                if last == 0:
-                    last = start = i
-                elif start + 1 == i:
-                    start = i
-                else:
-                    rows.append((last, start))
-                    last = start = i
-        rows.append((last, start))
-        return rows
-
-    def find_region(self, last):
-        """Create regions that have contigius black_ pixels."""
-        section = self.arr[last]
-        indeces = np.where(section == 0)[0]
-        t = []
-        l = f = indeces[0]
-        for index in indeces[1:]:
-            if index == f + 1:
-                f = index
-            else:
-                t.append((l,f))
-                l = f = index
-        t.append((l,f))
-        return t
-
+        gscale = cv.cvtColor(self.img, cv.COLOR_BGR2GRAY)
+        _, threshold = cv.threshold(gscale, 127, 255, cv.THRESH_BINARY)
+        return threshold
 
     def word_lengths(self):
-        sizes = [start - last for last,start in self.rows]
-        shortest = min(sizes)
-        largest = max(sizes)
-        m = sizes.index(shortest)
+        gap = row = lastx = None
+        for area in self.areas:
+            y1,y2,x1,x2 = area
+            if row is None:
+                row = y1
+                lastx = x2
+            
 
-        areas = {}
-        for last, start in self.rows:
-            if last - start > shortest:
-                # if np.zeros(shape=(last-start+2,))  do something
-                pass
-            else:
-                areas[(last, start)] = self.find_region(last)
+
+
         word_counter = []
         gap = largest // 2
         for key, value in areas.items():
