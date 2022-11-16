@@ -10,7 +10,6 @@ Includes:
 """
 import os
 import json
-from collections import Counter
 
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
@@ -29,8 +28,7 @@ class CryptoImg:
     def __init__(self, path=None, parent=None):
         self.parent = parent
         self.path = path
-        self.lines = []
-        self.line = []
+        self.words = []
         self.word = []
         # convert to an array
         self.img = cv.imread(path)
@@ -38,8 +36,8 @@ class CryptoImg:
         self.arr = self.convert_image()
         self.show_image(self.arr)
         # collect all rows that are not solid white_
-        self.areas = self.get_contours()
-        self.word_counter = self.word_lengths()
+        self.rows = self.get_contours()
+        self.word_lengths()
 
     def show_image(self, arr):
         label = QLabel()
@@ -48,22 +46,24 @@ class CryptoImg:
         data = im.tobytes()
         qim = QImage(data, im.size[0], im.size[1], QImage.Format_RGBA8888)
         pixmap = QPixmap.fromImage(qim)
-        label.setPixmap(pixmap.scaledToWidth(700))
+        val = int(arr.shape[0]*.4)
+        label.setPixmap(pixmap.scaledToWidth(val))
         self.parent.scrolllayout.addWidget(label)
         label.show()
+        QApplication.instance().processEvents()
 
     def get_contours(self):
         contours, _ = cv.findContours(
             self.arr, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
         )
-        upper, under, left, right = -8, 8, -3, 80
+        upper, under, left, right = -5, 5, -3, 80
         sizes = {}
         for contour in contours:
             y, x = contour[0][0]
             sub = self.arr[x + upper : x + under, y + left : y + right]
             zed = np.where(sub==0)
             l = len(set(zed[0]))
-            if l <= 4 and len(zed[1]) > 2:
+            if l <= 5 and len(zed[1]) > 2:
                 pxls = sorted(set(zed[1]))
                 last = i = pxls[0]
                 for j in pxls[1:]:
@@ -72,78 +72,55 @@ class CryptoImg:
                     i = j
                 sizes.setdefault((l,i - last), [])
                 sizes[(l,i-last)].append([x-l,x+l,y-2,y+i-last+2])
-        return max(list(sizes.values()), key=len)
+        size, rows = max(list(sizes.items()), key=lambda x: len(x[1]))
+        self.area_size = size
+        grid = {}
+        for row in rows:
+            for g in grid:
+                if abs(row[0] - g) <= 2:
+                    grid[g].append(row)
+                    break
+            else:
+                grid[row[0]] = [row]
+        gap_list = sorted(list(grid.keys()))
+        self.gap = max(
+            [gap_list[k] - gap_list[k-1] for k in range(1,len(gap_list))]
+        )
+        rows = [sorted(v, key=lambda x: x[2]) for k,v in sorted(grid.items())]
+        return rows
 
     def convert_image(self):
         gscale = cv.cvtColor(self.img, cv.COLOR_BGR2GRAY)
-        _, threshold = cv.threshold(gscale, 127, 255, cv.THRESH_BINARY)
+        _, threshold = cv.threshold(gscale, 150, 255, cv.THRESH_BINARY)
         return threshold
 
     def word_lengths(self):
-        gap = row = lastx = None
-        for area in self.areas:
-            y1,y2,x1,x2 = area
-            if row is None:
-                row = y1
-                lastx = x2
-            
-
-
-
-        word_counter = []
-        gap = largest // 2
-        for key, value in areas.items():
-            char_counter = []
-            x1, x2 = key
-            gaps = [value[i][0] - value[i-1][1] for i in range(1, len(value))]
+        gap = self.gap // 2
+        for row in self.rows:
+            gaps = [row[i][2] - row[i-1][3] for i in range(1,len(row))]
             min_gap = min(gaps)
-            count, apostrophe = 1, False
-            for i in range(1, len(value)):
-                y1, y2 = value[i-1]
-                y3, y4 = value[i]
+            for i in range(1, len(row)):
+                _, x2, y1, y2 = row[i-1]
+                _, _, y3, y4 = row[i]
                 char1 = self.img[x2+10:x2+gap,y1:y2]
                 char2 = self.img[x2+10:x2+gap,y3:y4]
                 self.process_img(char1)
-                if y3-y2 == min_gap:
-                    count += 1
-                elif y3 - y2 > min_gap:
-                    upper = self.arr[x1-gap:x1-1, y2+1:y3-1]
-                    lower = self.arr[x2+1:x2+gap, y2+1:y3-1]
-                    apostrophe2 = False
-                    if np.sum(upper) != 255 * upper.size:
-                        if np.sum(lower) == 255 * lower.size:
-                            apostrophe = True
-                            apostrophe2 = True
-                        count += 2
-                    else:
-                        char_counter.append((count,apostrophe))
-                        count = 1
-                        apostrophe = False
-                    self.process_img(lower, apostraphe=apostrophe2)
-            self.process_img(char2, newline=True)
-            char_counter.append((count, apostrophe))
-            word_counter.append(char_counter)
-        if self.word:
-            self.line.append(self.word)
-            self.lines.append(self.line)
-            self.line = []
-            self.word = []
-        return word_counter
+                if y3 - y2 > min_gap:
+                    # upper = self.arr[x1 - gap: x1 - 1, y2 + 1: y3 - 1]
+                    lower = self.arr[x2 + 1: x2 + gap, y2 + 1: y3 - 1]
+                    self.process_img(lower)
+            self.process_img(char2)
+        self.words.append(self.word)
 
-    def process_img(self, arr, newline=False, apostraphe=False):
+    def process_img(self, arr):
         img = Image.fromarray(arr)
         txt = pytesseract.image_to_string(img, lang="eng", config='-l eng --oem 1 --psm 6  -c preserve_interword_spaces=1 -c tessedit_char_whitelist="0123456789- "')
         txt = txt.strip()
-        if txt.isdigit():
+        if not txt:
+            self.words.append(self.word)
+            self.word = []
+        elif txt.isdigit():
             self.word.append(txt)
-        elif txt == '':
-            self.line.append(self.word)
-            self.word = []
-        if newline:
-            self.line.append(self.word)
-            self.lines.append(self.line)
-            self.line = []
-            self.word = []
 
 
 class CryptoGram(QWidget):
@@ -162,6 +139,8 @@ class CryptoGram(QWidget):
         self.button4 = QPushButton("Select", parent=self)
         self.resultlabel = Label("Result", self)
         self.resultedit1 = QTextBrowser(parent=self)
+        self.resultedit1.setFontPointSize(12.0)
+        self.resultedit1.setSizeAdjustPolicy(self.resultedit1.sizeAdjustPolicy().AdjustToContents)
         self.scrollarea = QScrollArea()
         self.scrollwidget = QWidget()
         self.scrolllayout = QVBoxLayout(self.scrollwidget)
@@ -188,8 +167,13 @@ class CryptoGram(QWidget):
         self.layout.addLayout(self.hlayout1)
         self.layout.addLayout(self.hlayout2)
         self.layout.addLayout(self.hlayout3)
-        self.layout.addLayout(self.vlayout3)
-        self.layout.addWidget(self.scrollarea)
+        self.splitter = QSplitter(Qt.Vertical)
+        self.editframe = QFrame()
+        self.editframe.setLayout(self.vlayout3)
+        self.splitter.addWidget(self.editframe)
+        self.splitter.addWidget(self.scrollarea)
+        self.splitter.setStretchFactor(1,5)
+        self.layout.addWidget(self.splitter)
         self.phraseimage.pressed.connect(self.select_phrase_file)
         self.phraseinput.pressed.connect(self.input_phrase)
         self.button3.pressed.connect(self.unselect)
@@ -203,16 +187,16 @@ class CryptoGram(QWidget):
 
     def select_phrase_file(self):
         path = QFileDialog.getOpenFileName(parent=self, caption="Image File")
-        if not path:
-            return
-        path = path[0]
-        self.cryptoimg = CryptoImg(path, self)
         inp = ""
-        for line in self.cryptoimg.lines:
-            for word in line:
+        if path:
+            path = path[0]
+            self.cryptoimg = CryptoImg(path, self)
+            for word in self.cryptoimg.words:
                 inp += " ".join(word)
                 inp += "  "
-        self.solve(inp)
+            self.solve(inp)
+        else:
+            self.window.statusbar.showMessage("didnt work", 100000)
 
     def switchcurrent(self):
         self.list2widget.clear()
@@ -250,7 +234,6 @@ class CryptoGram(QWidget):
                 self.mapping[x] = y
                 self.rev[y] = x
         self.reresult()
-        print(self.mapping, self.rev)
 
     def unselect(self):
         item = self.listwidget.currentItem()
@@ -287,7 +270,8 @@ class CryptoGram(QWidget):
     def reresult(self):
         self.resultedit1.clear()
         string = ""
-        for i in range(self.listwidget.count()):
+        count = self.listwidget.count()
+        for i in range(count):
             item = self.listwidget.item(i)
             word = item.word
             for char in word:
@@ -295,8 +279,10 @@ class CryptoGram(QWidget):
                     string += self.mapping[char]
                 else:
                     string += "_"
-            string += "  "
+            string += " \n" if i and i % (count//5) == 0 else "  "
         self.resultedit1.setText(string)
+
+
 
 
 class Window(QMainWindow):
@@ -307,6 +293,8 @@ class Window(QMainWindow):
         self.central = TabWidget(parent=self)
         self.resize(800,800)
         self.central.setLayout(self.layout)
+        self.statusbar = self.statusBar()
+        self.setStatusBar(self.statusbar)
         self.setCentralWidget(self.central)
         self.setWindowTitle("Daily Challenge Puzzle Solver")
         icon = QIcon("./assets/puzzle.png")
@@ -359,11 +347,8 @@ class Permutations(QWidget):
 
     def solve(self):
         partial = self.perm_line_edit.text().upper()
-        print(partial)
         word = partial[0]
-        print(word)
         chars = [i for i in partial[1:] if i.isalpha() or i == "'"]
-        print(chars)
         self.row = 0
         self.limit = 12
         self.col = 0
