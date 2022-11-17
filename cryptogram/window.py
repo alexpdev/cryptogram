@@ -43,7 +43,7 @@ class CryptoImg:
         label = QLabel()
         image = Image.fromarray(arr)
         im = image.convert("RGBA")
-        im = im.resize(tuple(map(lambda x: int(x/5), arr.shape)))
+        im = im.reduce(5)
         data = im.tobytes()
         qim = QImage(data, im.size[0], im.size[1], QImage.Format_RGBA8888)
         pixmap = QPixmap.fromImage(qim)
@@ -141,9 +141,8 @@ class CryptoGram(QWidget):
         self.button4 = QPushButton("Select", parent=self)
         self.resultlabel = Label("Result", self)
         self.resultedit1 = QTextBrowser(parent=self)
-        self.resultedit1.setFontPointSize(12.0)
-        self.resultedit1.t
-        self.resultedit1.setSizePolicy(self.resultedit1.sizePolicy().Policy.Maximum,self.resultedit1.sizePolicy().Policy.Maximum)
+        self.resultedit1.setFontPointSize(16.0)
+        self.resultedit1.setAlignment(Qt.AlignCenter)
         self.scrollarea = QScrollArea()
         self.scrollwidget = QWidget()
         self.scrolllayout = QVBoxLayout(self.scrollwidget)
@@ -283,6 +282,8 @@ class CryptoGram(QWidget):
                     string += "_"
             string += "  \n" if i and i % (count//5) == 0 else "  "
         self.resultedit1.setText(string)
+        self.resultedit1.selectAll()
+        self.resultedit1.setAlignment(Qt.AlignCenter)
 
 
 
@@ -293,7 +294,7 @@ class Window(QMainWindow):
         super().__init__(parent=parent)
         self.layout = QVBoxLayout()
         self.central = TabWidget(parent=self)
-        self.resize(600,600)
+        self.resize(800,700)
         self.central.setLayout(self.layout)
         self.statusbar = self.statusBar()
         self.setStatusBar(self.statusbar)
