@@ -24,43 +24,46 @@ DATADIR = os.path.join(os.path.dirname(SRCDIR), "data")
 ALLWORDS = json.load(open(os.path.join(DATADIR, "allWords.json"),"rt"))
 
 
-class CryptoImg:
+class CryptoImg(QThread):
+    phrase_start = Signal()
+    next_word = Signal(list)
+    phrase_end = Signal()
+
+
     def __init__(self, path=None, parent=None):
+        super().__init__(parent=parent)
         self.parent = parent
         self.path = path
-        self.words = []
         self.word = []
-        # convert to an array
         self.img = cv.imread(path)
-        # convert array to all 0 and 255 value pixels
-        self.arr = self.convert_image()
-        self.show_image(self.arr)
-        # collect all rows that are not solid white_
-        self.rows = self.get_contours()
-        self.word_lengths()
 
-    def show_image(self, arr):
+    def convert_image(self):
+        gscale = cv.cvtColor(self.img, cv.COLOR_BGR2GRAY)
+        _, threshold = cv.threshold(gscale, 150, 255, cv.THRESH_BINARY)
+        return threshold
+
+    def show_image(self, arr=None):
+        if not arr:
+            arr = self.img
         label = QLabel()
         image = Image.fromarray(arr)
-        im = image.convert("RGBA")
-        im = im.reduce(5)
+        im = image.convert("RGBA").reduce(5)
         data = im.tobytes()
         qim = QImage(data, im.size[0], im.size[1], QImage.Format_RGBA8888)
-        pixmap = QPixmap.fromImage(qim)
-        label.setPixmap(pixmap)
+        label.setPixmap(QPixmap.fromImage(qim))
         self.parent.scrolllayout.addWidget(label)
         label.show()
         QApplication.instance().processEvents()
 
-    def get_contours(self):
+    def get_contours(self, arr):
         contours, _ = cv.findContours(
-            self.arr, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
+            arr, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
         )
         upper, under, left, right = -5, 5, -3, 80
         sizes = {}
         for contour in contours:
             y, x = contour[0][0]
-            sub = self.arr[x + upper : x + under, y + left : y + right]
+            sub = arr[x + upper : x + under, y + left : y + right]
             zed = np.where(sub==0)
             l = len(set(zed[0]))
             if l <= 5 and len(zed[1]) > 2:
@@ -72,8 +75,7 @@ class CryptoImg:
                     i = j
                 sizes.setdefault((l,i - last), [])
                 sizes[(l,i-last)].append([x-l,x+l,y-2,y+i-last+2])
-        size, rows = max(list(sizes.items()), key=lambda x: len(x[1]))
-        self.area_size = size
+        _, rows = max(list(sizes.items()), key=lambda x: len(x[1]))
         grid = {}
         for row in rows:
             for g in grid:
@@ -83,20 +85,22 @@ class CryptoImg:
             else:
                 grid[row[0]] = [row]
         gap_list = sorted(list(grid.keys()))
-        self.gap = max(
+        gap = max(
             [gap_list[k] - gap_list[k-1] for k in range(1,len(gap_list))]
         )
         rows = [sorted(v, key=lambda x: x[2]) for k,v in sorted(grid.items())]
-        return rows
+        return gap, rows
 
-    def convert_image(self):
-        gscale = cv.cvtColor(self.img, cv.COLOR_BGR2GRAY)
-        _, threshold = cv.threshold(gscale, 150, 255, cv.THRESH_BINARY)
-        return threshold
+    def run(self):
+        self.phrase_start.emit()
+        arr = self.convert_image()
+        gap, rows = self.get_contours(arr)
+        self.word_lengths(gap, rows)
+        self.phrase_end.emit()
 
-    def word_lengths(self):
-        gap = self.gap // 2
-        for row in self.rows:
+    def word_lengths(self, gap, rows):
+        gap = gap // 2
+        for row in rows:
             gaps = [row[i][2] - row[i-1][3] for i in range(1,len(row))]
             min_gap = min(gaps)
             for i in range(1, len(row)):
@@ -107,19 +111,19 @@ class CryptoImg:
                 self.process_img(char1)
                 if y3 - y2 > min_gap:
                     # upper = self.arr[x1 - gap: x1 - 1, y2 + 1: y3 - 1]
-                    lower = self.arr[x2 + 1: x2 + gap, y2 + 1: y3 - 1]
+                    lower = self.img[x2 + 1: x2 + gap, y2 + 1: y3 - 1]
                     self.process_img(lower)
             self.process_img(char2)
-            self.words.append(self.word)
+            self.next_word.emit(self.word)
             self.word = []
-        self.words.append(self.word)
+        self.next_word.emit(self.word)
 
     def process_img(self, arr):
         img = Image.fromarray(arr)
         txt = pytesseract.image_to_string(img, lang="eng", config='-l eng --oem 1 --psm 6  -c preserve_interword_spaces=1 -c tessedit_char_whitelist="0123456789- "')
         txt = txt.strip()
         if not txt:
-            self.words.append(self.word)
+            self.next_word.emit(self.word)
             self.word = []
         elif txt.isdigit():
             self.word.append(txt)
@@ -186,16 +190,30 @@ class CryptoGram(QWidget):
         self.dialog.inputAccepted.connect(self.solve)
         self.dialog.exec()
 
+    def add_word_to_resultedit(self, word):
+        inp = " ".join(word)
+        if inp:
+            self.solve(inp)
+
+    def show_completed_message(self):
+        self.window.statusbar.showMessage("Complete", 100000)
+
+    def clear_widgets(self):
+        self.resultedit1.clear()
+        self.list2widget.clear()
+        self.listwidget.clear()
+
     def select_phrase_file(self):
         path = QFileDialog.getOpenFileName(parent=self, caption="Image File")
-        inp = ""
         if path:
             path = path[0]
             self.cryptoimg = CryptoImg(path, self)
-            for word in self.cryptoimg.words:
-                inp += " ".join(word)
-                inp += "  "
-            self.solve(inp)
+            self.cryptoimg.show_image()
+            self.cryptoimg.phrase_start.connect(self.clear_widgets)
+            self.cryptoimg.next_word.connect(self.add_word_to_resultedit)
+            self.cryptoimg.phrase_end.connect(self.show_completed_message)
+            self.cryptoimg.finished.connect(self.cryptoimg.deleteLater)
+            self.cryptoimg.start()
         else:
             self.window.statusbar.showMessage("didnt work", 100000)
 
@@ -280,7 +298,9 @@ class CryptoGram(QWidget):
                     string += self.mapping[char]
                 else:
                     string += "_"
-            string += "  \n" if i and i % (count//5) == 0 else "  "
+            string += "  "
+            if count // 5 and i and not (i%count//5):
+                string += "\n"
         self.resultedit1.setText(string)
         self.resultedit1.selectAll()
         self.resultedit1.setAlignment(Qt.AlignCenter)
@@ -309,7 +329,7 @@ class TabWidget(QTabWidget):
     """Tab widget keeps track of which solving tool to use."""
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.window = parent.window
+        self.window = parent
         self.tab1 = CryptoGram(parent=self)
         self.tab2 = Anonagram(parent=self)
         self.tab3 = Permutations(parent=self)
